@@ -30,7 +30,7 @@ contract the code is expected to keep — see
 | UI | SwiftUI inside an AppKit `NSPanel` |
 | Build | Swift Package Manager — no Xcode project |
 | Platform | macOS 14+ (built and run against macOS 27) |
-| Tests | XCTest over `PodKit` |
+| Tests | swift-testing over `PodKit` |
 
 `PodKit` is a library target holding the logic; `Pod` is a thin executable that
 boots it. Everything with a decision in it — geometry, dismiss timing, style
@@ -44,7 +44,7 @@ needed.
 
 ```bash
 swift build          # compile
-swift test           # run the suite
+./Scripts/test.sh    # run the suite
 ./Scripts/build-app.sh   # assemble dist/Pod.app
 open dist/Pod.app    # run it
 ```
