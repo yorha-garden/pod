@@ -66,20 +66,38 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
     }
 
-    /// Sizes, positions and shows the panel for a state.
+    /// Shows the panel for a state, then sizes it once SwiftUI has caught up.
     private func apply(_ state: IslandState) {
-        guard let panel, let hosting else { return }
+        guard let panel else { return }
 
         guard state.isVisible else {
             panel.orderOut(nil)
             return
         }
 
+        panel.orderFrontRegardless()
+
+        // `@Published` fires in `willSet`, so right now the hosting view is
+        // still rendering the state being replaced — measuring here measures
+        // the outgoing view, and for the first presentation that is an empty
+        // one, which collapses the panel to nothing. Size on the next runloop
+        // turn, once SwiftUI has rebuilt for the state being applied.
+        DispatchQueue.main.async { [weak self] in
+            self?.resize(for: state)
+        }
+    }
+
+    /// Fits the panel to what SwiftUI actually laid out.
+    private func resize(for state: IslandState) {
+        guard let panel, let hosting, state.isVisible else { return }
+
         guard let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 })
             ?? NSScreen.main
         else {
             return
         }
+
+        hosting.layoutSubtreeIfNeeded()
 
         let geometry = NotchGeometry(screen: screen)
         // Ask SwiftUI what the content wants, so the island grows with the
@@ -90,7 +108,6 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
         )
 
         panel.setFrame(frame, display: true, animate: controller.style.motion.allowsGeometryMorph)
-        panel.orderFrontRegardless()
 
         if case .expanded(.keyboard) = state {
             // Summoned from the keyboard, so hand over the focus it asked for.
