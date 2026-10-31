@@ -81,6 +81,15 @@ replaces it with a fade in place rather than merely shortening it: no spring,
 no scale, no travel, and `NSPanel.setFrame` stops animating too.
 *Test: "Reduce Motion replaces the morph with a fade in place".*
 
+Appearing is never animated at the window level, for anyone. The panel is
+placed before it is shown, so it cannot sweep in from wherever it was built,
+and AppKit's own appear animation is switched off — how the island enters is
+decided by the style alone. A frame change animates only between two on-screen
+states, and only where the morph is allowed.
+*Tests: "Appearing from hidden never animates the frame, whatever the motion
+setting", "Between on-screen states the frame animates only when the morph is
+allowed".*
+
 ## 6. Contrast does not depend on the wallpaper
 
 Reduce Transparency swaps the material for a flat fill. So does Increase

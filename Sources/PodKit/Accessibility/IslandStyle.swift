@@ -28,6 +28,16 @@ public enum MotionTreatment: Equatable, Sendable {
             return duration
         }
     }
+
+    /// Whether moving the panel to a new frame should animate.
+    ///
+    /// Only between two on-screen states, and only where the morph is allowed.
+    /// Appearing from hidden has no previous frame worth animating from — on
+    /// the first presentation the panel's last frame is wherever it was
+    /// constructed — so the island is placed first and shown where it belongs.
+    public func animatesFrameChange(panelWasOnScreen: Bool) -> Bool {
+        panelWasOnScreen && allowsGeometryMorph
+    }
 }
 
 /// How the island's surface is filled.

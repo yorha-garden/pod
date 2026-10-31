@@ -37,6 +37,25 @@ struct IslandStyleTests {
         #expect(style.borderWidth == 2)
     }
 
+    @Test("Appearing from hidden never animates the frame, whatever the motion setting",
+          arguments: [AccessibilityPreferences.standard, AccessibilityPreferences(reduceMotion: true)])
+    func appearingIsPlacedNotAnimated(preferences: AccessibilityPreferences) {
+        let motion = IslandStyle.resolve(for: preferences).motion
+
+        // There is no previous frame worth animating from: on the first
+        // presentation it is wherever the panel was constructed.
+        #expect(!motion.animatesFrameChange(panelWasOnScreen: false))
+    }
+
+    @Test("Between on-screen states the frame animates only when the morph is allowed")
+    func onScreenChangesFollowReduceMotion() {
+        let standard = IslandStyle.resolve(for: .standard).motion
+        let reduced = IslandStyle.resolve(for: AccessibilityPreferences(reduceMotion: true)).motion
+
+        #expect(standard.animatesFrameChange(panelWasOnScreen: true))
+        #expect(!reduced.animatesFrameChange(panelWasOnScreen: true))
+    }
+
     @Test("Colour is never the only state cue, and the hit floor always holds",
           arguments: 0..<16)
     func invariantsHoldForEveryCombination(mask: Int) {

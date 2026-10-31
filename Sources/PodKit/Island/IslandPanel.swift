@@ -30,6 +30,12 @@ public final class IslandPanel: NSPanel {
         isMovable = false
         isReleasedWhenClosed = false
 
+        // No window-level appear animation. AppKit scales panels in slightly
+        // as they are ordered front, and Pod's style has no say over that;
+        // how the island appears is decided by `IslandStyle` alone, which is
+        // the part that honours Reduce Motion.
+        animationBehavior = .none
+
         // Named, so VoiceOver announces the panel instead of an anonymous
         // window, and given the floating subrole it actually has.
         setAccessibilityLabel("Pod")
