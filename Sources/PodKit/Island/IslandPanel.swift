@@ -36,6 +36,11 @@ public final class IslandPanel: NSPanel {
         // the part that honours Reduce Motion.
         animationBehavior = .none
 
+        // Set explicitly, not left at the default: by default a window lets
+        // clicks through wherever it draws nothing, and the resting target
+        // draws nothing on purpose.
+        ignoresMouseEvents = false
+
         // Named, so VoiceOver announces the panel instead of an anonymous
         // window, and given the floating subrole it actually has.
         setAccessibilityLabel("Pod")
