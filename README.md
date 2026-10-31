@@ -59,5 +59,13 @@ service. User preferences live in `UserDefaults` under the app's own domain.
 
 ## Deployment
 
-Local only for now — `Scripts/build-app.sh` assembles an unsigned bundle into
-`dist/`. Signing and notarisation are not wired up.
+Local only for now. `Scripts/build-app.sh` assembles `dist/Pod.app` and ad-hoc
+signs it, which is enough to run it here. Real signing and notarisation are not
+wired up, so Gatekeeper will want a first-run approval on any other machine.
+
+## Documentation
+
+- [`docs/accessibility.md`](docs/accessibility.md) — the contract, with the test
+  names that enforce each line and the manual checks for the rest
+- [`docs/architecture.md`](docs/architecture.md) — module shape and data flow
+- [`docs/adr/`](docs/adr/) — decision log
