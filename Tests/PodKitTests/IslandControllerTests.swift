@@ -91,4 +91,82 @@ struct IslandControllerTests {
 
         #expect(!controller.style.motion.allowsGeometryMorph)
     }
+
+    @Test("Resting the pointer on the island expands it after the intent delay")
+    func hoverExpandsAfterIntent() async throws {
+        let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.hoverIntentDelay = 0.05
+
+        controller.present(.collapsed(.event(.mediaChanged)))
+        controller.setPointerInside(true)
+        #expect(!controller.state.isExpanded)
+
+        try await Task.sleep(for: .milliseconds(250))
+
+        #expect(controller.state == .expanded(.hover))
+    }
+
+    @Test("Passing over the island does not expand it")
+    func passingOverDoesNotExpand() async throws {
+        let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.hoverIntentDelay = 0.05
+
+        controller.present(.collapsed(.event(.mediaChanged)))
+        controller.setPointerInside(true)
+        controller.setPointerInside(false)
+
+        try await Task.sleep(for: .milliseconds(250))
+
+        #expect(controller.state == .collapsed(.event(.mediaChanged)))
+    }
+
+    @Test("The pointer holds an expanded island open past its timeout")
+    func pointerHoldsPastTimeout() async throws {
+        let controller = IslandController(policy: DismissPolicy(base: 0.05), sink: RecordingSink())
+
+        controller.present(.expanded(.hover))
+        controller.setPointerInside(true)
+
+        try await Task.sleep(for: .milliseconds(250))
+
+        #expect(controller.state.isVisible)
+    }
+
+    @Test("Leaving the island restarts its timeout")
+    func leavingRestartsTheTimeout() async throws {
+        let controller = IslandController(policy: DismissPolicy(base: 0.05), sink: RecordingSink())
+
+        controller.present(.expanded(.hover))
+        controller.setPointerInside(true)
+        controller.setPointerInside(false)
+
+        try await Task.sleep(for: .milliseconds(250))
+
+        #expect(controller.state == .hidden)
+    }
+
+    @Test("A click expands at once, from hidden, and says so")
+    func clickExpandsImmediately() {
+        let sink = RecordingSink()
+        let controller = IslandController(sink: sink)
+
+        controller.expandFromClick()
+
+        #expect(controller.state == .expanded(.hover))
+        #expect(sink.posted.last?.message == "Pod expanded")
+    }
+
+    @Test("An explicit dismiss outranks a hover that was about to expand")
+    func dismissCancelsHoverIntent() async throws {
+        let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.hoverIntentDelay = 0.05
+
+        controller.present(.collapsed(.event(.mediaChanged)))
+        controller.setPointerInside(true)
+        controller.dismiss()
+
+        try await Task.sleep(for: .milliseconds(250))
+
+        #expect(controller.state == .hidden)
+    }
 }

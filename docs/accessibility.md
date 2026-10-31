@@ -34,9 +34,10 @@ only a pointer can touch.
 
 ## 2. A screen reader gets sentences, not fragments
 
-- Collapsed is one combined element (`.accessibilityElement(children: .combine)`)
-  with a summary label, so VoiceOver reads a sentence about the machine's state
-  rather than stepping through three unlabelled glyphs.
+- Collapsed is one button with a summary label, so VoiceOver reads a sentence
+  about the machine's state rather than stepping through three unlabelled
+  glyphs — and pressing it expands the island, from VoiceOver or the pointer
+  alike.
 - Expanded is a container (`children: .contain`), because now there are
   controls, and each needs its own label and focus stop.
 - The spoken strings are built on the models — `NowPlaying.accessibilityDescription`,
@@ -133,6 +134,35 @@ external monitor.
 *Tests: "The occluded band matches the housing height", "There is nothing to
 clear on a display without a housing".*
 
+## 11. The pointer is the extra, and it follows the hover rules
+
+Clicking the island, or resting the pointer on it, expands it. Content that
+appears that way has to meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
+
+- **Hoverable and persistent.** While the pointer is over the island it is never
+  dismissed on a timer — the rule keyboard focus already had, user preference
+  included. Leaving restarts the clock.
+  *Tests: "The pointer resting on the island holds it open", "A fixed preference
+  still yields to the pointer", "The pointer holds an expanded island open past
+  its timeout", "Leaving the island restarts its timeout".*
+- **Dismissible.** Control-Option-Space closes it without moving the pointer,
+  and so does Escape once the panel has focus.
+- **Not by accident.** Hover expands only after the pointer has rested for
+  0.25s, so crossing the notch on the way to the menu bar does not open it. A
+  click expands at once and is announced, like the hotkey.
+  *Tests: "Resting the pointer on the island expands it after the intent delay",
+  "Passing over the island does not expand it", "A click expands at once, from
+  hidden, and says so", "An explicit dismiss outranks a hover that was about to
+  expand".*
+- **Never takes the keyboard.** Hovering does not make the panel key, so typing
+  elsewhere keeps working. Only a click or the hotkey hands the panel focus, and
+  before the island goes back to rest the panel gives the keyboard back.
+- **Invisible and harmless at rest.** While hidden, the panel stays over the
+  camera housing and draws nothing. The display has no pixels there, so nobody
+  sees it, but the pointer can rest on it and VoiceOver finds a "Show Pod"
+  button. On a display without a housing there is no resting target at all,
+  because it would cover part of the menu bar — the hotkey is the way in there.
+
 ---
 
 ## What still needs a person
@@ -156,6 +186,10 @@ any release:
 6. **Accessibility Inspector.** Point it at the panel and confirm the element
    tree matches section 2 — one element collapsed, a container with three
    labelled buttons expanded.
+7. **Pointer.** Rest the pointer on the notch: the island expands after a beat
+   and stays for as long as the pointer is on it. Sweep across the notch
+   quickly: nothing opens. Click it: it expands at once. Hover while typing in
+   another app: the typing still lands there, not in Pod.
 
 ## Known gaps
 
@@ -170,3 +204,6 @@ any release:
 - There is no settings UI yet. `DismissPolicy.UserPreference` is honoured by
   the controller but nothing writes it.
 - The hotkey is fixed at Control-Option-Space and cannot be rebound.
+- Hover expansion cannot be turned off. Someone who triggers it by accident —
+  a tremor, a habit of parking the pointer at the top of the screen — needs
+  that switch, and it belongs with the settings UI.

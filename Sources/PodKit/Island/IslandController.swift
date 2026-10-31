@@ -14,12 +14,26 @@ public final class IslandController: ObservableObject {
     /// timer consults this, so focus is never pulled away on a timer.
     @Published public private(set) var hasKeyboardFocus = false
 
+    /// Whether the pointer is over the island. Like keyboard focus, it holds
+    /// the island open: nothing the pointer rests on is taken away on a timer.
+    @Published public private(set) var hasPointerInside = false
+
+    /// Whether the panel stays at the notch while hidden, as something for the
+    /// pointer to rest on and click. Set by the app layer from the display:
+    /// only where a camera housing gives it somewhere invisible to sit.
+    @Published public var hasRestingTarget = false
+
     public var policy: DismissPolicy
+
+    /// How long the pointer must rest on the island before it expands, so
+    /// crossing the notch on the way to the menu bar does not open it.
+    public var hoverIntentDelay: TimeInterval = 0.25
 
     private var preferences: AccessibilityPreferences
     private let sink: AnnouncementSink
     private var coalescer = AnnouncementCoalescer()
     private var dismissWork: DispatchWorkItem?
+    private var hoverWork: DispatchWorkItem?
 
     public init(
         preferences: AccessibilityPreferences = .standard,
@@ -67,6 +81,8 @@ public final class IslandController: ObservableObject {
 
     public func dismiss() {
         cancelPendingDismiss()
+        // An explicit dismiss outranks a hover that was about to expand.
+        cancelHoverIntent()
 
         guard state.isVisible else { return }
 
@@ -84,6 +100,55 @@ public final class IslandController: ObservableObject {
         rescheduleDismiss()
     }
 
+    /// Called by the app layer as the pointer enters and leaves the island.
+    ///
+    /// Entering starts the hover intent; leaving cancels it and restarts the
+    /// dismiss clock. Hovering never takes the keyboard focus — only a click
+    /// or the hotkey does — so typing elsewhere keeps working.
+    public func setPointerInside(_ inside: Bool) {
+        guard inside != hasPointerInside else { return }
+
+        hasPointerInside = inside
+        cancelHoverIntent()
+
+        if inside, !state.isExpanded {
+            let work = DispatchWorkItem { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.expandFromHover()
+                }
+            }
+            hoverWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + hoverIntentDelay, execute: work)
+        }
+
+        rescheduleDismiss()
+    }
+
+    /// A click on the island, or on its resting target: expand at once.
+    ///
+    /// Announced, like the hotkey, because a deliberate press should be
+    /// confirmed to someone who cannot see the result.
+    public func expandFromClick() {
+        cancelHoverIntent()
+
+        guard !state.isExpanded else { return }
+
+        present(.expanded(.hover), announcing: Announcement("Pod expanded", priority: .medium))
+    }
+
+    private func expandFromHover() {
+        hoverWork = nil
+
+        guard hasPointerInside, !state.isExpanded else { return }
+
+        present(.expanded(.hover))
+    }
+
+    private func cancelHoverIntent() {
+        hoverWork?.cancel()
+        hoverWork = nil
+    }
+
     private func rescheduleDismiss() {
         cancelPendingDismiss()
 
@@ -92,6 +157,7 @@ public final class IslandController: ObservableObject {
         let outcome = policy.outcome(
             reason: reason,
             hasKeyboardFocus: hasKeyboardFocus,
+            hasPointerInside: hasPointerInside,
             preferences: preferences
         )
 

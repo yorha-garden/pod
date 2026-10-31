@@ -94,4 +94,46 @@ struct DismissPolicyTests {
                 == .stayUntilDismissed
         )
     }
+
+    @Test("The pointer resting on the island holds it open")
+    func pointerHoldsTheIsland() {
+        let policy = DismissPolicy()
+
+        let outcome = policy.outcome(
+            reason: .event(.mediaChanged),
+            hasKeyboardFocus: false,
+            hasPointerInside: true,
+            preferences: .standard
+        )
+
+        #expect(outcome == .stayUntilDismissed)
+    }
+
+    @Test("A fixed preference still yields to the pointer")
+    func fixedPreferenceYieldsToPointer() {
+        let policy = DismissPolicy(userPreference: .fixed(10))
+
+        let outcome = policy.outcome(
+            reason: .hover,
+            hasKeyboardFocus: false,
+            hasPointerInside: true,
+            preferences: .standard
+        )
+
+        #expect(outcome == .stayUntilDismissed)
+    }
+
+    @Test("Once the pointer leaves, a pointer summon times out like any other")
+    func pointerSummonTimesOutAfterLeaving() {
+        let policy = DismissPolicy(base: 4)
+
+        let outcome = policy.outcome(
+            reason: .hover,
+            hasKeyboardFocus: false,
+            hasPointerInside: false,
+            preferences: .standard
+        )
+
+        #expect(outcome == .dismiss(after: 4))
+    }
 }

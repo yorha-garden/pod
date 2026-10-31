@@ -6,7 +6,7 @@ import Foundation
 /// it: something the user summoned deliberately must not time out the way an
 /// incidental hover does.
 public enum PresentationReason: Equatable, Sendable {
-    /// The pointer entered the island's hit area.
+    /// The pointer: resting on the island, or clicking it.
     case hover
     /// The user asked for it — global hotkey, or tabbing into the panel.
     case keyboard

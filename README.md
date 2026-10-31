@@ -50,7 +50,8 @@ open dist/Pod.app    # run it
 ```
 
 Pod is an agent (`LSUIElement`) — it has no Dock icon and no window of its own.
-It appears at the notch; press its hotkey to summon it from the keyboard.
+It appears at the notch. Click the notch or rest the pointer on it to open the
+island, or press Control-Option-Space to summon it from the keyboard.
 
 ## Environment variables
 

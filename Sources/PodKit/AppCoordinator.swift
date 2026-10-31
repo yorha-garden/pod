@@ -20,10 +20,12 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
     private var panel: IslandPanel?
     private var hosting: NSHostingView<IslandRootView>?
     private var hotKey: GlobalHotKey?
+    private var pointerTracker: PointerTracker?
     private var cancellables: Set<AnyCancellable> = []
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         buildPanel()
+        updateRestingTarget()
         observe()
         installHotKey()
 
@@ -44,6 +46,18 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
 
         self.hosting = hosting
         self.panel = panel
+        self.pointerTracker = PointerTracker(view: hosting) { [weak self] inside in
+            self?.controller.setPointerInside(inside)
+        }
+    }
+
+    /// A resting target only exists where a camera housing gives it somewhere
+    /// invisible to sit. Anywhere else it would cover part of the menu bar, so
+    /// the island is simply hidden there and the hotkey is the way in.
+    private func updateRestingTarget() {
+        controller.hasRestingTarget = NSScreen.screens.contains {
+            NotchGeometry(screen: $0).hasHousing
+        }
     }
 
     private func observe() {
@@ -64,14 +78,27 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
                 self?.announceIfLow(status)
             }
             .store(in: &cancellables)
+
+        // Displays come and go — a lid closing onto an external monitor
+        // takes the housing with it.
+        NotificationCenter.default
+            .publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.updateRestingTarget()
+                self.apply(self.controller.state)
+            }
+            .store(in: &cancellables)
     }
 
     /// Shows the panel for a state, then sizes it once SwiftUI has caught up.
     private func apply(_ state: IslandState) {
         guard let panel else { return }
 
-        guard state.isVisible else {
+        guard state.isVisible || controller.hasRestingTarget else {
             panel.orderOut(nil)
+            // Nothing is under the pointer once the panel is gone.
+            controller.setPointerInside(false)
             return
         }
 
@@ -103,15 +130,35 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
             return
         }
 
-        hosting.layoutSubtreeIfNeeded()
-
         let geometry = NotchGeometry(screen: screen)
-        // Ask SwiftUI what the content wants, so the island grows with the
-        // user's text size instead of clipping at a hardcoded width.
-        let frame = geometry.frame(
-            forContentOfSize: hosting.fittingSize,
-            minimumWidth: state.isExpanded ? 300 : 0
-        )
+        let frame: CGRect
+
+        if state.isVisible {
+            hosting.layoutSubtreeIfNeeded()
+            // Ask SwiftUI what the content wants, so the island grows with
+            // the user's text size instead of clipping at a hardcoded width.
+            frame = geometry.frame(
+                forContentOfSize: hosting.fittingSize,
+                minimumWidth: state.isExpanded ? 300 : 0
+            )
+        } else {
+            // At rest the panel sits exactly over the camera housing: nothing
+            // to see, but something for the pointer to rest on and click.
+            frame = geometry.housingRect
+        }
+
+        guard !frame.isNull else {
+            panel.orderOut(nil)
+            return
+        }
+
+        // Hand the keyboard back before going to rest. A key panel at rest
+        // would go on receiving the user's typing while showing nothing.
+        if !state.isVisible, panel.isKeyWindow {
+            panel.orderOut(nil)
+        }
+
+        panel.hasShadow = state.isVisible
 
         let wasOnScreen = panel.isVisible
         panel.setFrame(
