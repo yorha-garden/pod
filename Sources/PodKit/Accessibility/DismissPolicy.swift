@@ -40,21 +40,28 @@ public struct DismissPolicy: Equatable, Sendable {
     public func outcome(
         reason: PresentationReason,
         hasKeyboardFocus: Bool,
+        hasPointerInside: Bool = false,
         preferences: AccessibilityPreferences
     ) -> Outcome {
+        // Keyboard focus and the pointer both mean someone is using the
+        // island right now, and neither is ever taken away on a timer.
+        let isHeld = hasKeyboardFocus || hasPointerInside
+
         switch userPreference {
         case .never:
             return .stayUntilDismissed
         case let .fixed(interval):
-            // Still never yanked out from under a held focus.
-            return hasKeyboardFocus ? .stayUntilDismissed : .dismiss(after: interval)
+            // Still never yanked out from under a held focus or the pointer.
+            return isHeld ? .stayUntilDismissed : .dismiss(after: interval)
         case .automatic:
             break
         }
 
         // Dismissing a panel that holds the keyboard focus drops the user's
-        // place in the focus order with no warning. Never do it on a timer.
-        if hasKeyboardFocus {
+        // place in the focus order with no warning. The pointer gets the same
+        // rule: what it rests on stays until it leaves — WCAG 1.4.13's
+        // "hoverable" and "persistent".
+        if isHeld {
             return .stayUntilDismissed
         }
 
