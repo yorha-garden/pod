@@ -75,21 +75,27 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
             return
         }
 
-        panel.orderFrontRegardless()
-
         // `@Published` fires in `willSet`, so right now the hosting view is
         // still rendering the state being replaced — measuring here measures
         // the outgoing view, and for the first presentation that is an empty
         // one, which collapses the panel to nothing. Size on the next runloop
         // turn, once SwiftUI has rebuilt for the state being applied.
+        //
+        // The panel is only shown on that turn too, once it has its frame.
+        // Showing it here would show it wherever it last was — for the first
+        // presentation, the corner it was constructed in — and the frame
+        // change would then sweep it across the screen to the notch.
         DispatchQueue.main.async { [weak self] in
-            self?.resize(for: state)
+            self?.place(for: state)
         }
     }
 
-    /// Fits the panel to what SwiftUI actually laid out.
-    private func resize(for state: IslandState) {
-        guard let panel, let hosting, state.isVisible else { return }
+    /// Fits the panel to what SwiftUI laid out, then shows it there.
+    private func place(for state: IslandState) {
+        // A dismiss, or another state, can land between `apply` and this
+        // turn. Only the current state gets placed — a stale one must not
+        // bring a dismissed island back.
+        guard let panel, let hosting, controller.state == state else { return }
 
         guard let screen = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 })
             ?? NSScreen.main
@@ -107,7 +113,16 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
             minimumWidth: state.isExpanded ? 300 : 0
         )
 
-        panel.setFrame(frame, display: true, animate: controller.style.motion.allowsGeometryMorph)
+        let wasOnScreen = panel.isVisible
+        panel.setFrame(
+            frame,
+            display: true,
+            animate: controller.style.motion.animatesFrameChange(panelWasOnScreen: wasOnScreen)
+        )
+
+        if !wasOnScreen {
+            panel.orderFrontRegardless()
+        }
 
         if case .expanded(.keyboard) = state {
             // Summoned from the keyboard, so hand over the focus it asked for.
