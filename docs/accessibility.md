@@ -24,6 +24,9 @@ only a pointer can touch.
   `false` — Pod is an agent and should never become the active app.
 - `.nonactivatingPanel` means taking key focus does not drag the user out of
   whatever they were working in.
+- The panel never takes the keyboard while the screen is locked, even when the
+  island is allowed on the lock screen: the password field keeps it.
+  *Test: "The island never takes the keyboard on the lock screen".*
 - `GlobalHotKey` registers Control-Option-Space through Carbon, which needs no
   accessibility permission. An event tap would need one, and gating the
   keyboard path behind a permission dialog is backwards.
@@ -77,26 +80,31 @@ if reaching the trackpad takes you a moment.
 ## 5. Reduce Motion removes the motion
 
 The springy morph out of the notch is the signature of this kind of UI, and
-also the effect most likely to provoke vestibular symptoms. Reduce Motion
-replaces it with a fade in place rather than merely shortening it: no spring,
-no scale, no travel, and `NSPanel.setFrame` stops animating too.
-*Test: "Reduce Motion replaces the morph with a fade in place".*
+also the effect most likely to provoke vestibular symptoms. By default the
+island grows out of the housing on a spring that overshoots a little, and
+shrinks back on one that does not — it never bounces past the housing it is
+returning into. Reduce Motion replaces all of it with a fade in place rather
+than merely shortening it: no spring, no scale, no travel, the shape takes its
+new size at once, and the hover lift is gone.
+*Tests: "Reduce Motion replaces the morph with a fade in place", "Reduce Motion
+fades every transition in place and drops the hover lift", "Opening springs out
+with a bounce, closing settles without one".*
 
-Appearing is never animated at the window level, for anyone. The panel is
-placed before it is shown, so it cannot sweep in from wherever it was built,
-and AppKit's own appear animation is switched off — how the island enters is
-decided by the style alone. A frame change animates only between two on-screen
-states, and only where the morph is allowed.
-*Tests: "Appearing from hidden never animates the frame, whatever the motion
-setting", "Between on-screen states the frame animates only when the morph is
-allowed".*
+Nothing is ever animated at the window level, for anyone. The island's two
+panels are a fixed canvas: they are placed once, never resized to follow the
+island, and AppKit's own window animation is switched off. The island morphs
+inside the canvas, so how it moves is decided by the style alone.
+*Test: "Neither panel lets AppKit animate it: the island's motion is the style's
+alone".*
 
 ## 6. Contrast does not depend on the wallpaper
 
-Reduce Transparency swaps the material for a flat fill. So does Increase
-Contrast — a blur hands whatever is behind the island control of the text's
-contrast, so a border alone would not be enough. Increase Contrast also adds
-that border.
+The island is flat black — the camera housing grown outward — so light text on
+it has the same contrast over any wallpaper. Nothing translucent is drawn
+behind the text. What Reduce Transparency and Increase Contrast take away is
+the soft shadow that lifts the island off the desktop: with either on, the
+island's edge is exactly where its fill ends. Increase Contrast also adds a
+border, drawn inside the outline so the island's footprint does not change.
 *Test: "Increase Contrast adds a border and drops the blur".*
 
 ## 7. Colour is never the only cue
@@ -112,8 +120,13 @@ combinations, and "The low state carries a cue that is not colour".*
 
 Controls are padded to a 44pt floor however small the glyph is drawn, with
 `.contentShape(Rectangle())` so the padding is actually hittable rather than
-decorative. The island's own height never falls below the same floor.
-*Tests: "Content shorter than the hit floor still gets a reachable target".*
+decorative. The island's own height never falls below the same floor once it
+shows anything — collapsed, it is a few points taller than the housing on a
+14" display rather than shorter than the floor. Only the invisible resting
+target is the housing's exact size.
+*Tests: "Content shorter than the hit floor still gets a reachable target",
+"Collapsed, the island is at least the housing, and never below the hit
+floor".*
 
 ## 9. Larger text grows the island, it does not shrink the text
 
@@ -130,7 +143,9 @@ trade for someone who chose a larger size on purpose.
 `NotchGeometry.occlusion(in:)` reports the band the physical housing covers,
 and `topInsetClearingHousing(in:)` gives the inset that clears it. On a display
 without a housing both resolve to nothing, so the same layout code works on an
-external monitor.
+external monitor. Collapsed, the island's content sits in two ears either side
+of the housing with the housing's width left empty between them; open, the
+content starts below the housing's band.
 *Tests: "The occluded band matches the housing height", "There is nothing to
 clear on a display without a housing".*
 
@@ -157,11 +172,27 @@ appears that way has to meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
 - **Never takes the keyboard.** Hovering does not make the panel key, so typing
   elsewhere keeps working. Only a click or the hotkey hands the panel focus, and
   before the island goes back to rest the panel gives the keyboard back.
-- **Invisible and harmless at rest.** While hidden, the panel stays over the
-  camera housing and draws nothing. The display has no pixels there, so nobody
-  sees it, but the pointer can rest on it and VoiceOver finds a "Show Pod"
-  button. On a display without a housing there is no resting target at all,
-  because it would cover part of the menu bar — the hotkey is the way in there.
+- **Invisible and harmless at rest.** While hidden, the island stays as a black
+  shape exactly over the camera housing. The display has no pixels there, so
+  nobody sees it, but the pointer can rest on it and VoiceOver finds a "Show
+  Pod" button. On a display without a housing there is no resting target at
+  all, because it would cover part of the menu bar — the hotkey is the way in
+  there.
+  *Test: "At rest the island is the housing exactly, so it draws nowhere the
+  display has pixels".*
+- **Only the island, never the space around it.** The panels are a canvas
+  larger than the island, and the canvas lets the pointer through wherever
+  nothing is drawn; the shadow lives in a second panel that never takes the
+  pointer at all. Hover is tracked over the island's own shape, with a few
+  points of slack to leave by so the hover lift cannot flicker it.
+  *Tests: "The content panel takes the pointer only where it draws; the
+  backdrop never does", "The pointer enters only over the island itself",
+  "Once in, the pointer may drift a little before it counts as gone".*
+- **Acknowledged, then opened.** While the pointer rests on the island it grows
+  a few points before it opens, so the pointer is seen to have been noticed —
+  except under Reduce Motion, where the opening is the acknowledgement.
+- **Closed by clicking elsewhere.** A click anywhere but the island closes an
+  open island, like any other transient surface.
 
 ---
 
@@ -186,10 +217,16 @@ any release:
 6. **Accessibility Inspector.** Point it at the panel and confirm the element
    tree matches section 2 — one element collapsed, a container with three
    labelled buttons expanded.
-7. **Pointer.** Rest the pointer on the notch: the island expands after a beat
-   and stays for as long as the pointer is on it. Sweep across the notch
-   quickly: nothing opens. Click it: it expands at once. Hover while typing in
-   another app: the typing still lands there, not in Pod.
+7. **Pointer.** Rest the pointer on the notch: the island lifts, then expands
+   after a beat and stays for as long as the pointer is on it. Sweep across the
+   notch quickly: nothing opens. Click it: it expands at once. Hover while
+   typing in another app: the typing still lands there, not in Pod. Click a
+   window just below the open island: the click reaches that window, and the
+   island closes.
+8. **Full screen and the lock screen.** Put an app in full screen: the island is
+   still at the notch. Lock the screen: the island is gone, unless
+   `ShowIslandOnLockScreen` is set, in which case it is there and typing still
+   goes to the password field.
 
 ## Known gaps
 
@@ -204,6 +241,8 @@ any release:
 - There is no settings UI yet. `DismissPolicy.UserPreference` is honoured by
   the controller but nothing writes it.
 - The hotkey is fixed at Control-Option-Space and cannot be rebound.
+- There is no press feedback: the island does not dip under a held click
+  before it opens.
 - Hover expansion cannot be turned off. Someone who triggers it by accident —
   a tremor, a habit of parking the pointer at the top of the screen — needs
   that switch, and it belongs with the settings UI.

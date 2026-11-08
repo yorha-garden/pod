@@ -50,19 +50,34 @@ open dist/Pod.app    # run it
 ```
 
 Pod is an agent (`LSUIElement`) — it has no Dock icon and no window of its own.
-It appears at the notch. Click the notch or rest the pointer on it to open the
-island, or press Control-Option-Space to summon it from the keyboard.
+It appears at the notch, as the camera housing grown outward. Click the notch
+or rest the pointer on it to open the island, or press Control-Option-Space to
+summon it from the keyboard.
 
 ## Environment variables
 
 None. Pod reads no configuration from the environment and talks to no network
-service. User preferences live in `UserDefaults` under the app's own domain.
+service. User preferences live in `UserDefaults` under the app's own domain,
+`dev.yorha.pod`. Three switches decide how far the island reaches:
+
+| Key | Default | Effect |
+| --- | --- | --- |
+| `UsePrivateWindowServerAPI` | `YES` | Keeps the island in a window-server Space of its own, above full-screen apps and the lock screen. Undocumented API — see [ADR 2](docs/adr/0002-island-windows-on-a-fixed-canvas.md). |
+| `ShowIslandOnLockScreen` | `NO` | Leaves the island on the lock screen. Needs the switch above. |
+| `HideIslandInFullScreen` | `NO` | Takes the island away while a full-screen app is in front. |
+
+```bash
+defaults write dev.yorha.pod ShowIslandOnLockScreen -bool YES
+```
 
 ## Deployment
 
 Local only for now. `Scripts/build-app.sh` assembles `dist/Pod.app` and ad-hoc
 signs it, which is enough to run it here. Real signing and notarisation are not
 wired up, so Gatekeeper will want a first-run approval on any other machine.
+With `UsePrivateWindowServerAPI` on, Pod uses undocumented CoreGraphics calls
+and is not eligible for the Mac App Store; turn it off for a public-API-only
+build.
 
 ## Documentation
 
