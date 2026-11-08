@@ -16,6 +16,12 @@ public final class IslandLayout: ObservableObject {
     /// not a frame partway through it.
     @Published public var islandSize: CGSize = .zero
 
+    /// What the collapsed content measures, and how tall the open content is
+    /// at the open width, measured unseen ahead of time — so a state's size is
+    /// known before the island springs to it.
+    @Published public var collapsedContentSize: CGSize = .zero
+    @Published public var expandedContentHeight: CGFloat = 0
+
     public init(geometry: NotchGeometry) {
         self.geometry = geometry
     }

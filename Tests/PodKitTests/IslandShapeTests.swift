@@ -40,6 +40,53 @@ struct IslandShapeTests {
         #expect(external.minimumIslandSize(for: .expanded(.hover)) == CGSize(width: 345, height: 175))
     }
 
+    // MARK: The size the island springs to
+
+    @Test("The open island is pinned to the housing grown, whatever its content measures")
+    func openSizeIsPinned() {
+        let size = notched.islandSize(for: .expanded(.hover), collapsedContent: .zero, expandedContentHeight: 150)
+
+        #expect(size == CGSize(width: 368, height: 179.5))
+    }
+
+    @Test("Larger text still grows the open island downward, never wider")
+    func openSizeGrowsForLargerText() {
+        let size = notched.islandSize(for: .expanded(.hover), collapsedContent: .zero, expandedContentHeight: 260)
+
+        #expect(size == CGSize(width: 368, height: 260))
+    }
+
+    @Test("Collapsed, the island is what its content measures, never below the minimum")
+    func collapsedSizeFollowsContent() {
+        let wide = notched.islandSize(
+            for: .collapsed(.hover),
+            collapsedContent: CGSize(width: 520, height: 30),
+            expandedContentHeight: 0
+        )
+        #expect(wide == CGSize(width: 520, height: IslandStyle.hitTargetFloor))
+
+        let unmeasured = notched.islandSize(for: .collapsed(.hover), collapsedContent: .zero, expandedContentHeight: 0)
+        #expect(unmeasured == notched.minimumIslandSize(for: .collapsed(.hover)))
+    }
+
+    @Test("At rest the island springs back to the housing exactly")
+    func restingSizeIsTheHousing() {
+        let size = notched.islandSize(
+            for: .hidden,
+            collapsedContent: CGSize(width: 520, height: 44),
+            expandedContentHeight: 260
+        )
+
+        #expect(size == notched.housingSize)
+    }
+
+    @Test("The island's size is clamped to the display")
+    func sizeIsClamped() {
+        let size = notched.islandSize(for: .expanded(.hover), collapsedContent: .zero, expandedContentHeight: 5000)
+
+        #expect(size.height == notched.screenFrame.height)
+    }
+
     // MARK: Canvas
 
     @Test("The canvas hangs from the top edge, centred on the housing")
