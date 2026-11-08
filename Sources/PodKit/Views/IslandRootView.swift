@@ -225,14 +225,16 @@ public struct IslandRootView: View {
         case .content:
             IslandBackground(style: controller.style, shape: shape)
         case .backdrop:
-            // The shadow only where there is an island to lift, and only where
-            // translucent falloff is wanted. At rest the island is invisible on
-            // purpose, so it casts nothing.
-            if controller.state.isVisible, controller.style.background == .material {
-                shape
-                    .fill(.black)
-                    .shadow(color: .black.opacity(0.45), radius: 14, y: 6)
-            }
+            // Always there, so it moves with the island on the same spring:
+            // inserted only when the island showed, it appeared at its final
+            // size and faded in, a box at the open size behind an island
+            // still growing — and lingered at that size while it shrank. Only
+            // the shadow comes and goes. It falls only where there is an
+            // island to lift, and only where translucent falloff is wanted; at
+            // rest the island is invisible on purpose, so it casts nothing.
+            shape
+                .fill(.black)
+                .shadow(color: .black.opacity(castsShadow ? 0.45 : 0), radius: 14, y: 6)
         }
     }
 
@@ -245,6 +247,10 @@ public struct IslandRootView: View {
         controller.hasPointerInside
             && !controller.state.isExpanded
             && controller.style.motion.hoverLift != nil
+    }
+
+    private var castsShadow: Bool {
+        controller.state.isVisible && controller.style.background == .material
     }
 
     /// A held click on the lifted island dips it back, until the release
