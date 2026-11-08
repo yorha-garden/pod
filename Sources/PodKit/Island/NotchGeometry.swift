@@ -55,6 +55,80 @@ public struct NotchGeometry: Equatable, Sendable {
         )
     }
 
+    // MARK: The island grows out of the housing
+
+    /// How much wider the open island is than the housing it grows out of,
+    /// and the narrowest it gets on a small housing.
+    public static let expandedExtraWidth: CGFloat = 160
+    public static let expandedMinimumWidth: CGFloat = 345
+    /// How far the open island hangs below the housing, and the shortest it
+    /// gets.
+    public static let expandedExtraHeight: CGFloat = 142
+    public static let expandedMinimumHeight: CGFloat = 175
+
+    /// The smallest the island is drawn in a state, before its content asks
+    /// for more.
+    ///
+    /// Hidden, it is the housing exactly: a black shape where the display has
+    /// no pixels, so nothing shows, but something is there to rest the pointer
+    /// on. Collapsed, it is at least as tall as the housing and never shorter
+    /// than the hit-target floor. Open, it is the housing grown outward.
+    public func minimumIslandSize(for state: IslandState) -> CGSize {
+        switch state {
+        case .hidden:
+            return housingSize
+        case .collapsed:
+            return CGSize(
+                width: housingSize.width,
+                height: max(housingSize.height, IslandStyle.hitTargetFloor)
+            )
+        case .expanded:
+            return CGSize(
+                width: max(housingSize.width + Self.expandedExtraWidth, Self.expandedMinimumWidth),
+                height: max(housingSize.height + Self.expandedExtraHeight, Self.expandedMinimumHeight)
+            )
+        }
+    }
+
+    // MARK: The canvas the island morphs inside
+
+    /// The canvas is never smaller than this, so ordinary growth never has to
+    /// touch the windows.
+    public static let minimumCanvasSize = CGSize(width: 640, height: 320)
+
+    /// Room around the island for its shadow, its top ears and the hover lift.
+    public static let canvasMargin: CGFloat = 40
+
+    /// The fixed frame both island panels share: centred on the display,
+    /// hanging from its top edge, large enough for the island plus its margin
+    /// and clamped to the display.
+    ///
+    /// The width keeps the display's parity, so the canvas — and the island
+    /// centred in it — lands on the same centre line as the housing rather
+    /// than half a point off it.
+    public func canvasFrame(fitting island: CGSize) -> CGRect {
+        let wanted = max(Self.minimumCanvasSize.width, island.width + 2 * Self.canvasMargin)
+        let side = max(0, ((screenFrame.width - wanted) / 2).rounded(.down))
+        let width = screenFrame.width - 2 * side
+        let height = min(
+            screenFrame.height,
+            max(Self.minimumCanvasSize.height, island.height + Self.canvasMargin).rounded(.up)
+        )
+
+        return CGRect(
+            x: screenFrame.minX + side,
+            y: screenFrame.maxY - height,
+            width: width,
+            height: height
+        )
+    }
+
+    /// Whether a canvas still has room for an island of this size.
+    public func canvas(_ canvas: CGRect, fits island: CGSize) -> Bool {
+        let needed = canvasFrame(fitting: island)
+        return canvas.width >= needed.width && canvas.height >= needed.height
+    }
+
     /// The part of `frame` hidden behind the physical camera housing.
     ///
     /// Readable content must never be laid out inside this rect. Returns
