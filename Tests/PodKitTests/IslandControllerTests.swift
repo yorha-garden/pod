@@ -71,6 +71,38 @@ struct IslandControllerTests {
         #expect(controller.transition.direction == .shrinking)
     }
 
+    @Test("Pressing the island only records the press; the release is what opens it")
+    func pressAloneDoesNotExpand() {
+        let controller = IslandController(sink: RecordingSink())
+        controller.hasRestingTarget = true
+
+        controller.setPressed(true)
+        #expect(controller.isPressed)
+        #expect(controller.state == .hidden)
+
+        controller.setPressed(false)
+        controller.expandFromClick()
+        #expect(!controller.isPressed)
+        #expect(controller.state.isExpanded)
+    }
+
+    @Test("A held click holds off the hover that was about to open the island")
+    func pressHoldsOffHoverIntent() async throws {
+        let controller = IslandController(sink: RecordingSink())
+        controller.hasRestingTarget = true
+        controller.hoverIntentDelay = 0.05
+
+        controller.setPointerInside(true)
+        controller.setPressed(true)
+
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(controller.state == .hidden)
+
+        controller.setPressed(false)
+        controller.expandFromClick()
+        #expect(controller.state.isExpanded)
+    }
+
     @Test("A repeated announcement is not spoken twice while the island stays up")
     func repeatedAnnouncementIsCoalesced() {
         let sink = RecordingSink()

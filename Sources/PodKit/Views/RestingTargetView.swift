@@ -9,6 +9,7 @@ import SwiftUI
 /// something is drawn.
 struct RestingTargetView: View {
     let onExpand: () -> Void
+    var onPressChange: (Bool) -> Void = { _ in }
 
     var body: some View {
         Button(action: onExpand) {
@@ -17,7 +18,7 @@ struct RestingTargetView: View {
                 // Clear content has no hit area of its own; this gives it one.
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(IslandPressButtonStyle(onPressChange: onPressChange))
         .accessibilityLabel("Show Pod")
         .accessibilityHint("Control Option Space also works.")
     }

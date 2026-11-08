@@ -13,12 +13,13 @@ struct CollapsedContentView: View {
     let housingWidth: CGFloat
     let minimumHeight: CGFloat
     let onExpand: () -> Void
+    var onPressChange: (Bool) -> Void = { _ in }
 
     var body: some View {
         Button(action: onExpand) {
             content
         }
-        .buttonStyle(.plain)
+        .buttonStyle(IslandPressButtonStyle(onPressChange: onPressChange))
         .accessibilityLabel(summary)
         .accessibilityHint("Expands Pod. Control Option Space also works.")
     }
