@@ -319,3 +319,41 @@ gh pr merge 14 --merge --subject "feat(ui): open the island with the pointer [#1
 
 The merge button works too, if you edit its subject to match. Delete the branch
 once it has merged.
+
+## Security
+
+Never commit:
+
+- `.env` files;
+- keys and signing material: API keys, Developer ID exports (`.p12`),
+  notarisation keys (`.p8`), anything ending in `.pem` or `.key`;
+- logs.
+
+`.gitignore` covers all of these, but read `git status` before each commit
+anyway. Pod reads no environment and talks to no network service, so it has no
+secrets of its own to leak. Keep it that way: if a change needs one, raise it in
+the issue first. If a secret is ever pushed, deleting it in a later commit does
+not take it out of history. Revoke it, issue a new one, and tell a maintainer.
+
+## Documentation
+
+- The [README](README.md) keeps its sections current: overview, tech stack,
+  setup and run, environment variables, deployment.
+- [`docs/architecture.md`](docs/architecture.md) holds the module shape and the
+  data-flow diagram. Update it when either changes.
+- [`docs/adr/`](docs/adr/) is the decision log. A decision that would otherwise
+  be lost, such as a new dependency, a change of approach or a rule the code is
+  now expected to keep, gets a numbered record in the shape of
+  [ADR 0001](docs/adr/0001-accessibility-first-notch-hud.md).
+- [`docs/accessibility.md`](docs/accessibility.md) is the contract. A change in
+  behaviour updates it in the same PR, with the tests that enforce each line
+  and a written manual check for the rest.
+- Pod has no network API, so there is no API spec to keep.
+
+## Further reading
+
+- [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html),
+  Google's engineering practices
+- [A complete guide to code reviews](https://www.swarmia.com/blog/a-complete-guide-to-code-reviews),
+  Swarmia
+- [Trunk-based development](https://trunkbaseddevelopment.com/)
