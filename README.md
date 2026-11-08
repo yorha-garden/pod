@@ -70,3 +70,8 @@ wired up, so Gatekeeper will want a first-run approval on any other machine.
   names that enforce each line and the manual checks for the rest
 - [`docs/architecture.md`](docs/architecture.md) — module shape and data flow
 - [`docs/adr/`](docs/adr/) — decision log
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — branches, commits and pull requests:
+  how a change gets into Pod
+- [`.github/pull_request_template.md`](.github/pull_request_template.md) and
+  [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/) — what a PR and an issue
+  are expected to say

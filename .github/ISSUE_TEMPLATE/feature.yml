@@ -1,0 +1,43 @@
+name: Feature request
+description: Something Pod should do that it does not.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem before the solution. The owner agrees the
+        approach in the comments here before anyone starts building; see
+        CONTRIBUTING.md.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What Pod should do. A rough outline is fine.
+    validations:
+      required: true
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Keyboard and screen reader
+      description: >-
+        How is this reached without a pointer, and what does VoiceOver read?
+        The keyboard path comes first in Pod (docs/accessibility.md). If you do
+        not know yet, say so.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: What would show that this is finished?

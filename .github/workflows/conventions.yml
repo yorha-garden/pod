@@ -1,0 +1,42 @@
+# Holds a pull request to CONTRIBUTING.md: Conventional Commit subjects, a
+# feature/, fix/ or chore/ branch, and a title that ends in its issue. Like CI
+# it has no branch filter, so stacked PRs are checked too. It reruns when the
+# PR is edited, because the title becomes the merge commit's subject.
+name: Conventions
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conventions-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventions:
+    name: Commits, branch and title
+    # Needs only bash and git, so it stays off the macOS queue. Pinned for the
+    # same reason CI pins its image.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Full history, so the base commit is there to compare against.
+          fetch-depth: 0
+
+      - name: Check conventions
+        # Handed over as environment, not interpolated into the script, so a
+        # title or branch name cannot run as shell.
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BRANCH_NAME: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: ./Scripts/check-conventions.sh "$BASE_SHA" "$HEAD_SHA"
