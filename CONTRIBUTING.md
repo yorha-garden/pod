@@ -2,18 +2,19 @@
 
 Every change to Pod takes the same route. An issue says what and why, a
 short-lived branch holds the work in small commits, a pull request carries it
-to review, and a merge puts it on `main`. This file is the detail of each step.
+towards `main`, and the owner merges it once its checks are green. This file is
+the detail of each step.
 
 Some of it is checked by machine. `CI` builds and runs the suite, and
 `Conventions` reads the commit subjects, the branch name and the PR title. The
-rest is up to the author and the reviewer, and is written down here so neither
-has to guess.
+rest is up to whoever makes the change, and is written down here so nobody has
+to guess.
 
 ## The workflow
 
 1. **Create or find an issue.** Say what the problem is before solving it. If
    the issue already exists, comment on it with the approach you have in mind
-   and wait for a maintainer to agree. That is cheaper than a rewritten PR, and
+   and wait for the owner to agree. That is cheaper than a rewritten PR, and
    it stops two people building the same thing. *New issue* offers a bug form
    and a feature form.
 2. **Branch from `main`**, one branch per issue. See [Branches](#branches).
@@ -23,10 +24,7 @@ has to guess.
    [Before each commit](#before-each-commit).
 5. **Open a pull request** from the template. See
    [Pull requests](#pull-requests).
-6. **Review.** Reviewers comment, the author revises, and the cycle repeats
-   until it is approved. See [Review](#review).
-7. **Merge** once CI is green, every thread is resolved and a reviewer has
-   approved. See [Merging](#merging).
+6. **Merge.** The owner merges once CI is green. See [Merging](#merging).
 
 ## Branches
 
@@ -61,14 +59,14 @@ git branch -m feature/<short-description>
 
 Nobody commits straight to `main`; every change reaches it through a branch and
 a pull request. The one exception is an incident that needs a hotfix sooner
-than a review can happen. Then push the smallest fix that ends it, and open an
-issue recording what went in and why, so the change still gets read.
+than a pull request can go through. Then push the smallest fix that ends it,
+and open an issue recording what went in and why, so there is a record of it.
 
 ## Commits
 
 ### Size
 
-A commit is one logical change: small enough to review in one sitting, and to
+A commit is one logical change: small enough to read in one sitting, and to
 revert without taking anything else with it. As a guide:
 
 - roughly 5 to 100 changed lines;
@@ -83,7 +81,7 @@ test is that if you stopped work now, what you have should be committable.
 Avoid:
 
 - large commits. A thousand lines across many files and concerns cannot be
-  reviewed properly or reverted cleanly;
+  read properly or reverted cleanly;
 - `WIP` commits on any branch someone else can see. Tidy them into real steps
   locally before you push;
 - panic commits: a long burst of changes with no intermediate commit and no
@@ -152,8 +150,8 @@ default shortcut, a new system permission, or a line of the
 
 ### Before each commit
 
-Testing first means review time goes on design and correctness, not on
-discovering that something does not build.
+Testing before committing keeps `main` releasable at every commit, and means
+the author finds a failure rather than CI.
 
 - `swift build` compiles with no new warnings. Pod has no linter, so a new
   compiler warning is the lint error.
@@ -176,16 +174,16 @@ Before you push, `./Scripts/check-conventions.sh` runs the same check as
 
 ### Talk first
 
-Comment on the issue before you start, and confirm the approach with a
-maintainer. That avoids duplicate work and solutions that pull against where
-Pod is going. A draft pull request is a good way to ask about a direction with
-code in hand; mark it ready for review when it is.
+Comment on the issue before you start, and confirm the approach with the owner.
+That avoids duplicate work and solutions that pull against where Pod is going.
+A draft pull request is a good way to ask about a direction with code in hand;
+mark it ready when it is.
 
 ### Keep it small
 
 One problem per pull request. Unrelated fixes and tidying, however small, go in
-a PR of their own. Aim for under about 500 changed lines: small PRs are reviewed
-sooner, roll back cleanly and carry less risk when they merge.
+a PR of their own. Aim for under about 500 changed lines: small PRs are easier
+to follow, roll back cleanly and carry less risk when they merge.
 
 When a change is bigger than that, split it into a stack. Each PR branches from
 the one below it and targets that branch instead of `main`:
@@ -238,73 +236,20 @@ The template asks for:
 
 - **Summary**: the change in a sentence or two.
 - **Problem**: what it fixes or makes possible.
-- **Solution**: how, and where a reviewer should look first.
+- **Solution**: how, and where to look first.
 - **Test Evidence**: how it was tested, with screenshots or a recording.
 - **Deployment Prerequisite / Breaking Changes**: as above.
-- **Notes**: anything else a reviewer should know.
+- **Notes**: anything else worth knowing before it merges.
 
-Write it for someone who has not read the code you just wrote. A reviewer should
-understand the change from the description without tracing the codebase.
-
-## Review
-
-### The cycle
-
-A reviewer is assigned and leaves feedback. Author and reviewer discuss it, the
-author revises, and the cycle repeats until the reviewer approves. Then the PR
-merges.
-
-### What reviewers look for
-
-The aim is a better change, not a verdict on its author. Read for:
-
-- **Correctness.** Does it solve the problem in the issue? Are the edge cases
-  handled: no notch, a second display, VoiceOver running, Reduce Motion on?
-- **Readability.** Can you follow it? Is any function too large or doing too
-  much?
-- **Architecture.** Does it fit [`docs/architecture.md`](docs/architecture.md)?
-  Decisions belong in `PodKit` as pure values, not in views or the coordinator,
-  and the controller observes nothing. Does it add coupling it does not need?
-- **Testing.** Are there tests, and would they fail if the change were wrong?
-- **Documentation.** If behaviour changed, did
-  [`docs/accessibility.md`](docs/accessibility.md) change with it, naming the
-  tests that enforce each new line?
-- **Performance and security.** Does it do work on every frame or pointer move
-  that it could skip? Does it ask for a permission, read something private, or
-  add a dependency?
-
-### Writing feedback
-
-- Be respectful, and give the reasoning behind each comment.
-- Say which comments are required and which are optional. Prefix optional ones
-  with `nit:`. Anything without it is a change you need before you approve.
-- Ask when something is unclear, rather than assuming.
-- Do not block on trivia. If only nits are left, approve and leave them to the
-  author.
-
-Use GitHub's review states to match: *Request changes* when something is
-required, *Comment* for questions and nits, *Approve* when it is ready.
-
-### Responding to feedback
-
-- Answer every comment: fix it, or reply saying why not.
-- Ask when a comment is unclear, and give your reasoning when you disagree.
-  Review is a discussion.
-- Do not apply a suggestion you do not understand.
-- Push fixes as new commits with real subjects, such as
-  `fix(island): cancel the dismiss timer on focus` rather than
-  `address review`, so the reviewer can see what changed. Prefer that to
-  rewriting the branch while it is under review.
-- Then re-request review, and say in a comment which changes matter most.
+Write it for someone who has not read the code you just wrote. The change should
+make sense from the description without tracing the codebase.
 
 ## Merging
 
-A pull request merges when:
+The owner merges a pull request once:
 
-- every CI check passes. If one fails, the PR is updated until it does not;
-- every review thread is resolved;
-- the required reviewers have approved: at least one maintainer other than the
-  author;
+- every CI check passes: *CI / Build and test* and *Conventions / Commits,
+  branch and title*. If one fails, the PR is updated until it does not;
 - the commit subjects and the title follow this guide, which `Conventions`
   checks.
 
@@ -333,7 +278,7 @@ Never commit:
 anyway. Pod reads no environment and talks to no network service, so it has no
 secrets of its own to leak. Keep it that way: if a change needs one, raise it in
 the issue first. If a secret is ever pushed, deleting it in a later commit does
-not take it out of history. Revoke it, issue a new one, and tell a maintainer.
+not take it out of history. Revoke it, issue a new one, and tell the owner.
 
 ## Documentation
 
@@ -352,8 +297,5 @@ not take it out of history. Revoke it, issue a new one, and tell a maintainer.
 
 ## Further reading
 
-- [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html),
-  Google's engineering practices
-- [A complete guide to code reviews](https://www.swarmia.com/blog/a-complete-guide-to-code-reviews),
-  Swarmia
 - [Trunk-based development](https://trunkbaseddevelopment.com/)
+- [Conventional Commits](https://www.conventionalcommits.org/)
