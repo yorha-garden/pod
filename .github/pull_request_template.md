@@ -16,7 +16,7 @@ Closes #
 
 ## Solution
 
-<!-- How it works, and where a reviewer should look first. -->
+<!-- How it works, and where to look first. -->
 
 ## Test Evidence
 
@@ -39,7 +39,7 @@ the migration steps. Write "None" if there are none.
 
 ## Notes
 
-<!-- Anything else reviewers should know or focus on. -->
+<!-- Anything else worth knowing before this merges. -->
 
 ## Checklist
 
