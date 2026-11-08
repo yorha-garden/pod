@@ -50,21 +50,22 @@ open dist/Pod.app    # run it
 ```
 
 Pod is an agent (`LSUIElement`) — it has no Dock icon and no window of its own.
-It appears at the notch, as the camera housing grown outward. Click the notch
-or rest the pointer on it to open the island, or press Control-Option-Space to
-summon it from the keyboard.
+It appears at the notch, as the camera housing grown outward. Rest the pointer
+on the notch and it lifts; click it to open the island, or press
+Control-Option-Space to summon it from the keyboard.
 
 ## Environment variables
 
 None. Pod reads no configuration from the environment and talks to no network
 service. User preferences live in `UserDefaults` under the app's own domain,
-`dev.yorha.pod`. Three switches decide how far the island reaches:
+`dev.yorha.pod`. Four switches decide how far the island reaches and what opens it:
 
 | Key | Default | Effect |
 | --- | --- | --- |
 | `UsePrivateWindowServerAPI` | `YES` | Keeps the island in a window-server Space of its own, above full-screen apps and the lock screen. Undocumented API — see [ADR 2](docs/adr/0002-island-windows-on-a-fixed-canvas.md). |
 | `ShowIslandOnLockScreen` | `NO` | Leaves the island on the lock screen. Needs the switch above. |
 | `HideIslandInFullScreen` | `NO` | Takes the island away while a full-screen app is in front. |
+| `ExpandIslandOnHover` | `NO` | Opens the island when the pointer rests on it for 0.25s, not only on a click. |
 
 ```bash
 defaults write dev.yorha.pod ShowIslandOnLockScreen -bool YES

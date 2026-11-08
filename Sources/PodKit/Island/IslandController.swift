@@ -33,8 +33,18 @@ public final class IslandController: ObservableObject {
 
     public var policy: DismissPolicy
 
-    /// How long the pointer must rest on the island before it expands, so
-    /// crossing the notch on the way to the menu bar does not open it.
+    /// Whether resting the pointer on the island opens it. Off by default:
+    /// the pointer lifts the island to show it has been noticed, and a click
+    /// opens it, so nothing opens under a pointer parked at the top of the
+    /// screen. Read from `ExpandIslandOnHover` by the app layer.
+    public var expandsOnHover = false
+
+    /// The defaults key that turns `expandsOnHover` on.
+    public static let expandsOnHoverKey = "ExpandIslandOnHover"
+
+    /// How long the pointer must rest on the island before it expands, when
+    /// hover opens it at all, so crossing the notch on the way to the menu bar
+    /// does not open it.
     public var hoverIntentDelay: TimeInterval = 0.25
 
     private var preferences: AccessibilityPreferences
@@ -117,8 +127,8 @@ public final class IslandController: ObservableObject {
 
     /// Called by the app layer as the pointer enters and leaves the island.
     ///
-    /// Entering starts the hover intent; leaving cancels it and restarts the
-    /// dismiss clock. Hovering never takes the keyboard focus — only a click
+    /// Entering starts the hover intent where hover opens the island; leaving
+    /// cancels it and restarts the dismiss clock. Hovering never takes the keyboard focus — only a click
     /// or the hotkey does — so typing elsewhere keeps working.
     public func setPointerInside(_ inside: Bool) {
         guard inside != hasPointerInside else { return }
@@ -126,7 +136,7 @@ public final class IslandController: ObservableObject {
         hasPointerInside = inside
         cancelHoverIntent()
 
-        if inside, !state.isExpanded {
+        if inside, expandsOnHover, !state.isExpanded {
             let work = DispatchWorkItem { [weak self] in
                 MainActor.assumeIsolated {
                     self?.expandFromHover()
@@ -166,7 +176,7 @@ public final class IslandController: ObservableObject {
     private func expandFromHover() {
         hoverWork = nil
 
-        guard hasPointerInside, !state.isExpanded else { return }
+        guard expandsOnHover, hasPointerInside, !state.isExpanded else { return }
 
         present(.expanded(.hover))
     }
