@@ -1,6 +1,6 @@
 import AppKit
 
-/// The window the island lives in.
+/// The window the island lives in — the upper of the two island panels.
 ///
 /// A borderless `NSPanel` returns false from `canBecomeKey` by default, and
 /// that single default is why notch overlays tend to be unreachable without a
@@ -8,38 +8,35 @@ import AppKit
 /// ring, nothing for Tab to land on, and nothing for VoiceOver to navigate
 /// into. Pod overrides it, and pairs it with `.nonactivatingPanel` so taking
 /// the key focus does not drag the user out of the app they were working in.
+///
+/// The panel is a fixed, mostly transparent canvas (see
+/// `IslandWindowConfiguration`): it takes the pointer only where the island
+/// draws, and lets it through everywhere else.
 public final class IslandPanel: NSPanel {
     /// Invoked on Escape, so the controller can dismiss.
     public var onCancel: (() -> Void)?
 
-    public init(contentRect: CGRect) {
+    /// Whether the panel may take the keyboard at all. Switched off while the
+    /// screen is locked, where a key window over the lock screen would pull
+    /// typing away from the password field.
+    public var allowsKeyFocus = true
+
+    public init(contentRect: CGRect, configuration: IslandWindowConfiguration = .content) {
         super.init(
             contentRect: contentRect,
-            styleMask: [.borderless, .nonactivatingPanel],
+            styleMask: configuration.styleMask,
             backing: .buffered,
-            defer: false
+            defer: true
         )
 
-        isFloatingPanel = true
-        level = .statusBar
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-        isOpaque = false
-        backgroundColor = .clear
-        hasShadow = true
-        hidesOnDeactivate = false
-        isMovable = false
-        isReleasedWhenClosed = false
-
-        // No window-level appear animation. AppKit scales panels in slightly
-        // as they are ordered front, and Pod's style has no say over that;
-        // how the island appears is decided by `IslandStyle` alone, which is
-        // the part that honours Reduce Motion.
-        animationBehavior = .none
-
-        // Set explicitly, not left at the default: by default a window lets
-        // clicks through wherever it draws nothing, and the resting target
-        // draws nothing on purpose.
-        ignoresMouseEvents = false
+        // Shadow off, clear, unmovable, no AppKit animation, above the shield
+        // on every Space. No window-level appear animation in particular:
+        // AppKit scales panels in as they are ordered front, and Pod's style
+        // has no say over that. How the island appears is decided by
+        // `IslandStyle` alone, which is the part that honours Reduce Motion.
+        // Not `isFloatingPanel`: setting it puts the panel back at the
+        // floating level, under the menu bar.
+        configuration.apply(to: self)
 
         // Named, so VoiceOver announces the panel instead of an anonymous
         // window, and given the floating subrole it actually has.
@@ -48,7 +45,7 @@ public final class IslandPanel: NSPanel {
     }
 
     /// The override that makes the island reachable from the keyboard.
-    public override var canBecomeKey: Bool { true }
+    public override var canBecomeKey: Bool { allowsKeyFocus }
 
     /// Still false: Pod is an agent and never becomes the active app. The
     /// panel can hold key focus for keyboard use without stealing the user's
@@ -58,5 +55,40 @@ public final class IslandPanel: NSPanel {
     /// Escape dismisses, the way every other transient macOS surface does.
     public override func cancelOperation(_ sender: Any?) {
         onCancel?()
+    }
+
+    /// Left where it is put. AppKit would otherwise push the canvas down below
+    /// the menu bar, and the island has to hang from the display's very top.
+    public override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        frameRect
+    }
+}
+
+/// The lower island panel: the island's shadow, and nothing you can press.
+///
+/// It never takes the pointer or the keyboard, and draws in extended sRGB so
+/// the shadow's falloff over a bright wallpaper does not band.
+public final class IslandBackdropPanel: NSPanel {
+    public init(contentRect: CGRect, configuration: IslandWindowConfiguration = .backdrop) {
+        super.init(
+            contentRect: contentRect,
+            styleMask: configuration.styleMask,
+            backing: .buffered,
+            defer: true
+        )
+
+        configuration.apply(to: self)
+        colorSpace = .extendedSRGB
+
+        // Decoration only: keep it out of the accessibility tree, so VoiceOver
+        // finds one Pod window, not two.
+        setAccessibilityElement(false)
+    }
+
+    public override var canBecomeKey: Bool { false }
+    public override var canBecomeMain: Bool { false }
+
+    public override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        frameRect
     }
 }
