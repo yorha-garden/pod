@@ -112,6 +112,38 @@ public enum IslandMotion: Equatable, Sendable {
     case fade(duration: Double)
 }
 
+/// How a state's content comes in and goes out while the island changes.
+///
+/// Under the morph the content grows out of the island's centre from half
+/// size, coming into focus as it fades in, and leaves the same way, so it
+/// arrives and departs with the shape rather than sliding across it. Under a
+/// fade it only fades.
+public struct ContentEntrance: Equatable, Sendable {
+    /// The content's scale at the start of its entrance and the end of its exit.
+    public var scale: Double
+    /// Its blur radius, in points, at those same moments.
+    public var blur: Double
+
+    public init(scale: Double, blur: Double) {
+        self.scale = scale
+        self.blur = blur
+    }
+
+    public static let morph = ContentEntrance(scale: 0.5, blur: 4)
+    public static let fade = ContentEntrance(scale: 1, blur: 0)
+}
+
+extension IslandMotion {
+    public var contentEntrance: ContentEntrance {
+        switch self {
+        case .spring:
+            return .morph
+        case .fade:
+            return .fade
+        }
+    }
+}
+
 /// A change from one state to another, kept so the view can pick the motion
 /// for the step it is actually taking.
 public struct IslandTransition: Equatable, Sendable {

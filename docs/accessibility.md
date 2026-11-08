@@ -84,13 +84,15 @@ also the effect most likely to provoke vestibular symptoms. By default the
 island grows out of the housing on a spring that overshoots a little, and
 shrinks back on one that does not — it never bounces past the housing it is
 returning into. Each state has an explicit size, so it is the island's own
-frame that springs between them. Reduce Motion replaces all of it with a fade
+frame that springs between them, and the content grows into focus from the
+island's centre as it fades in, and leaves the same way. Reduce Motion replaces all of it with a fade
 in place rather than merely shortening it: no spring, no scale, no travel, the
 shape takes its new size at once, and the hover lift and the press dip are
 gone.
 *Tests: "Reduce Motion replaces the morph with a fade in place", "Reduce Motion
 fades every transition in place and drops the hover lift", "Reduce Motion drops
-the dip as well as the lift", "Opening springs out with a bounce, closing
+the dip as well as the lift", "Content grows into focus from the island's
+centre, and under Reduce Motion only fades", "Opening springs out with a bounce, closing
 settles without one", "The open island is pinned to the housing grown, whatever
 its content measures".*
 

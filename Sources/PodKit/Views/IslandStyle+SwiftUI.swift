@@ -25,15 +25,34 @@ extension IslandMotion {
         }
     }
 
-    /// How content enters and leaves. The morph scales it up out of the
-    /// housing, the way the island itself grows; the fade carries its own
+    /// How content enters and leaves. The morph grows it out of the island's
+    /// centre, coming into focus as it fades in; the fade carries its own
     /// timing, because under a fade the shape has none to lend it.
     public var transition: AnyTransition {
         switch self {
         case .spring:
-            return .scale(scale: 0.6, anchor: .top).combined(with: .opacity)
+            let entrance = contentEntrance
+            return .modifier(
+                active: ContentEntranceEffect(scale: entrance.scale, blur: entrance.blur, opacity: 0),
+                identity: ContentEntranceEffect(scale: 1, blur: 0, opacity: 1)
+            )
         case let .fade(duration):
             return .opacity.animation(.easeInOut(duration: duration))
         }
+    }
+}
+
+/// Scale about the centre, blur and opacity, applied together so one
+/// transition can carry all three.
+struct ContentEntranceEffect: ViewModifier {
+    let scale: Double
+    let blur: Double
+    let opacity: Double
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(scale, anchor: .center)
+            .blur(radius: blur)
+            .opacity(opacity)
     }
 }
