@@ -46,9 +46,9 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
 
         self.hosting = hosting
         self.panel = panel
-        self.pointerTracker = PointerTracker(view: hosting) { [weak self] inside in
+        self.pointerTracker = PointerTracker(onChange: { [weak self] inside in
             self?.controller.setPointerInside(inside)
-        }
+        })
     }
 
     /// A resting target only exists where a camera housing gives it somewhere
@@ -98,6 +98,7 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
         guard state.isVisible || controller.hasRestingTarget else {
             panel.orderOut(nil)
             // Nothing is under the pointer once the panel is gone.
+            pointerTracker?.region = .none
             controller.setPointerInside(false)
             return
         }
@@ -151,6 +152,8 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
             panel.orderOut(nil)
             return
         }
+
+        pointerTracker?.region = HoverRegion(island: frame)
 
         // Hand the keyboard back before going to rest. A key panel at rest
         // would go on receiving the user's typing while showing nothing.
