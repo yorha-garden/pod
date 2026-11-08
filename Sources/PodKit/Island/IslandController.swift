@@ -8,6 +8,10 @@ import Foundation
 @MainActor
 public final class IslandController: ObservableObject {
     @Published public private(set) var state: IslandState = .hidden
+
+    /// The step the island last took, so the view can move it the way that
+    /// step calls for: growing, shrinking, or holding its size.
+    @Published public private(set) var transition: IslandTransition = .none
     @Published public private(set) var style: IslandStyle
 
     /// Whether the panel currently holds the keyboard focus. The dismiss
@@ -64,7 +68,7 @@ public final class IslandController: ObservableObject {
     /// they like without talking over the user.
     public func present(_ newState: IslandState, announcing announcement: Announcement? = nil) {
         let wasHidden = !state.isVisible
-        state = newState
+        move(to: newState)
 
         if wasHidden {
             // A fresh presentation: whatever was said last time is no longer
@@ -86,8 +90,15 @@ public final class IslandController: ObservableObject {
 
         guard state.isVisible else { return }
 
-        state = .hidden
+        move(to: .hidden)
         hasKeyboardFocus = false
+    }
+
+    /// The transition is published first, so a view rebuilt for the new state
+    /// already knows which way it is going.
+    private func move(to newState: IslandState) {
+        transition = IslandTransition(from: state, to: newState)
+        state = newState
     }
 
     /// Called by the view layer as focus enters and leaves the panel.
