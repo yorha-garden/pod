@@ -90,6 +90,41 @@ public struct NotchGeometry: Equatable, Sendable {
         }
     }
 
+    /// The size the island is drawn at in a state: the size its morph springs
+    /// toward.
+    ///
+    /// Given explicitly rather than left to the content, so the island's frame
+    /// itself interpolates between states instead of jumping to whatever the
+    /// incoming content measures. At rest it is the housing; collapsed it is
+    /// what the content measures, at least the minimum; open it is the
+    /// housing grown to a fixed width, taller only when larger text needs it.
+    ///
+    /// - Parameters:
+    ///   - collapsedContent: the collapsed content's own size.
+    ///   - expandedContentHeight: the open content's height at the open width.
+    public func islandSize(
+        for state: IslandState,
+        collapsedContent: CGSize,
+        expandedContentHeight: CGFloat
+    ) -> CGSize {
+        let minimum = minimumIslandSize(for: state)
+
+        switch state {
+        case .hidden:
+            return minimum
+        case .collapsed:
+            return CGSize(
+                width: min(max(minimum.width, collapsedContent.width), screenFrame.width),
+                height: min(max(minimum.height, collapsedContent.height), screenFrame.height)
+            )
+        case .expanded:
+            return CGSize(
+                width: min(minimum.width, screenFrame.width),
+                height: min(max(minimum.height, expandedContentHeight), screenFrame.height)
+            )
+        }
+    }
+
     // MARK: The canvas the island morphs inside
 
     /// The canvas is never smaller than this, so ordinary growth never has to

@@ -83,12 +83,16 @@ The springy morph out of the notch is the signature of this kind of UI, and
 also the effect most likely to provoke vestibular symptoms. By default the
 island grows out of the housing on a spring that overshoots a little, and
 shrinks back on one that does not — it never bounces past the housing it is
-returning into. Reduce Motion replaces all of it with a fade in place rather
-than merely shortening it: no spring, no scale, no travel, the shape takes its
-new size at once, and the hover lift is gone.
+returning into. Each state has an explicit size, so it is the island's own
+frame that springs between them. Reduce Motion replaces all of it with a fade
+in place rather than merely shortening it: no spring, no scale, no travel, the
+shape takes its new size at once, and the hover lift and the press dip are
+gone.
 *Tests: "Reduce Motion replaces the morph with a fade in place", "Reduce Motion
-fades every transition in place and drops the hover lift", "Opening springs out
-with a bounce, closing settles without one".*
+fades every transition in place and drops the hover lift", "Reduce Motion drops
+the dip as well as the lift", "Opening springs out with a bounce, closing
+settles without one", "The open island is pinned to the housing grown, whatever
+its content measures".*
 
 Nothing is ever animated at the window level, for anyone. The island's two
 panels are a fixed canvas: they are placed once, never resized to follow the
@@ -130,13 +134,16 @@ floor".*
 
 ## 9. Larger text grows the island, it does not shrink the text
 
-Panel frames come from the hosting view's `fittingSize`, and `NotchGeometry`
-derives the frame from the content it is given, clamped to the display. Text
-wraps with `.fixedSize(horizontal: false, vertical: true)` and there is
+The island's size comes from its content as laid out at the user's text size:
+collapsed it is whatever the content measures, open it keeps a fixed width and
+grows downward when the content needs more height, all clamped to the display.
+Text wraps with `.fixedSize(horizontal: false, vertical: true)` and there is
 deliberately no `minimumScaleFactor` anywhere — shrinking text is the wrong
 trade for someone who chose a larger size on purpose.
 *Tests: "Growing content grows the island rather than clipping it",
-"Oversized content is clamped to the display, not grown off-screen".*
+"Oversized content is clamped to the display, not grown off-screen", "Larger
+text still grows the open island downward, never wider", "The island's size is
+clamped to the display".*
 
 ## 10. Nothing readable hides behind the camera housing
 
@@ -189,8 +196,13 @@ appears that way has to meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
   backdrop never does", "The pointer enters only over the island itself",
   "Once in, the pointer may drift a little before it counts as gone".*
 - **Acknowledged, then opened.** While the pointer rests on the island it grows
-  a few points before it opens, so the pointer is seen to have been noticed —
-  except under Reduce Motion, where the opening is the acknowledgement.
+  a few points before it opens, so the pointer is seen to have been noticed; a
+  held click dips it back a little, and the release opens it — except under
+  Reduce Motion, where the opening is the acknowledgement.
+  *Tests: "A held click dips the lifted island 8 by 5 points, on a spring that
+  does not bounce", "Pressing the island only records the press; the release
+  is what opens it", "A held click holds off the hover that was about to open
+  the island".*
 - **Closed by clicking elsewhere.** A click anywhere but the island closes an
   open island, like any other transient surface.
 
@@ -241,8 +253,6 @@ any release:
 - There is no settings UI yet. `DismissPolicy.UserPreference` is honoured by
   the controller but nothing writes it.
 - The hotkey is fixed at Control-Option-Space and cannot be rebound.
-- There is no press feedback: the island does not dip under a held click
-  before it opens.
 - Hover expansion cannot be turned off. Someone who triggers it by accident —
   a tremor, a habit of parking the pointer at the top of the screen — needs
   that switch, and it belongs with the settings UI.

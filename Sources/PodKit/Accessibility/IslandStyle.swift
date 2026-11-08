@@ -42,12 +42,21 @@ public struct MorphTiming: Equatable, Sendable {
     public var settle: SpringCurve
     /// The small lift while the pointer rests on the island.
     public var hover: SpringCurve
+    /// The dip under a held click, and the return from it.
+    public var press: SpringCurve
 
-    public init(open: SpringCurve, close: SpringCurve, settle: SpringCurve, hover: SpringCurve) {
+    public init(
+        open: SpringCurve,
+        close: SpringCurve,
+        settle: SpringCurve,
+        hover: SpringCurve,
+        press: SpringCurve
+    ) {
         self.open = open
         self.close = close
         self.settle = settle
         self.hover = hover
+        self.press = press
     }
 
     /// The island's timings.
@@ -57,12 +66,14 @@ public struct MorphTiming: Equatable, Sendable {
     /// housing rather than sliding. Closing is critically damped — the
     /// quickest settle with no overshoot — so the island never bounces past
     /// the housing it returns into. Holding steps settle a little slower,
-    /// with no overshoot either, and the hover lift is short and springy.
+    /// with no overshoot either, the hover lift is short and springy, and
+    /// the dip under a held click is quick and does not bounce.
     public static let standard = MorphTiming(
         open: .bounce(duration: 0.44, bounce: 0.375),
         close: .response(0.4, dampingFraction: 1),
         settle: .response(0.4875, dampingFraction: 1),
-        hover: .bounce(duration: 0.35, bounce: 0.3)
+        hover: .bounce(duration: 0.35, bounce: 0.3),
+        press: .response(0.3, dampingFraction: 1)
     )
 }
 
@@ -79,6 +90,18 @@ public struct HoverLift: Equatable, Sendable {
     /// Enough to see without looking for it: wider by 14 points and taller by
     /// six, out of a housing a couple of hundred points across.
     public static let standard = HoverLift(width: 14, height: 6)
+
+    /// Held under a click, the lifted island dips back 8 by 5 points — the
+    /// press is felt before the release opens it.
+    public static let pressed = HoverLift(width: 6, height: 1)
+
+    public static let none = HoverLift(width: 0, height: 0)
+
+    /// How far the island's surface reaches past its frame.
+    public static func outset(lifted: Bool, pressed isPressed: Bool) -> HoverLift {
+        guard lifted else { return .none }
+        return isPressed ? .pressed : .standard
+    }
 }
 
 /// What one change of state gets.
@@ -158,6 +181,17 @@ public enum MotionTreatment: Equatable, Sendable {
             }
         case let .crossFade(duration):
             return .fade(duration: duration)
+        }
+    }
+
+    /// The dip under a held click, or nothing at all: under Reduce Motion the
+    /// island does not move until it opens.
+    public var pressDip: SpringCurve? {
+        switch self {
+        case let .morph(timing):
+            return timing.press
+        case .crossFade:
+            return nil
         }
     }
 

@@ -87,6 +87,26 @@ struct IslandStyleTests {
         #expect(motion.hoverLift == nil)
     }
 
+    @Test("A held click dips the lifted island 8 by 5 points, on a spring that does not bounce")
+    func pressDip() {
+        let motion = IslandStyle.resolve(for: .standard).motion
+
+        #expect(HoverLift.outset(lifted: true, pressed: false) == .standard)
+        #expect(HoverLift.outset(lifted: true, pressed: true) == HoverLift(width: 6, height: 1))
+        #expect(HoverLift.standard.width - HoverLift.pressed.width == 8)
+        #expect(HoverLift.standard.height - HoverLift.pressed.height == 5)
+        #expect(HoverLift.outset(lifted: false, pressed: true) == .none)
+
+        #expect(motion.pressDip?.overshoots == false)
+    }
+
+    @Test("Reduce Motion drops the dip as well as the lift")
+    func reduceMotionDropsTheDip() {
+        let motion = IslandStyle.resolve(for: AccessibilityPreferences(reduceMotion: true)).motion
+
+        #expect(motion.pressDip == nil)
+    }
+
     @Test("Without Reduce Motion the pointer gets a short springy lift")
     func hoverLiftWithoutReduceMotion() {
         let motion = IslandStyle.resolve(for: .standard).motion

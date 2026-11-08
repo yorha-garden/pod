@@ -22,6 +22,10 @@ public final class IslandController: ObservableObject {
     /// the island open: nothing the pointer rests on is taken away on a timer.
     @Published public private(set) var hasPointerInside = false
 
+    /// Whether a click is being held down on the island. The release is what
+    /// opens it; while held, the island dips.
+    @Published public private(set) var isPressed = false
+
     /// Whether the panel stays at the notch while hidden, as something for the
     /// pointer to rest on and click. Set by the app layer from the display:
     /// only where a camera housing gives it somewhere invisible to sit.
@@ -133,6 +137,18 @@ public final class IslandController: ObservableObject {
         }
 
         rescheduleDismiss()
+    }
+
+    /// Called by the view layer as a click is pressed and released on the
+    /// island. Pressing changes nothing but the dip, and holds off the hover
+    /// intent that was about to open the island: the release decides.
+    public func setPressed(_ pressed: Bool) {
+        guard pressed != isPressed else { return }
+        isPressed = pressed
+
+        if pressed {
+            cancelHoverIntent()
+        }
     }
 
     /// A click on the island, or on its resting target: expand at once.
