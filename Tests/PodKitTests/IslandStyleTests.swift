@@ -107,6 +107,16 @@ struct IslandStyleTests {
         #expect(motion.pressDip == nil)
     }
 
+    @Test("Content grows into focus from the island's centre, and under Reduce Motion only fades")
+    func contentEntrance() {
+        let standard = IslandStyle.resolve(for: .standard).motion
+        let reduced = IslandStyle.resolve(for: AccessibilityPreferences(reduceMotion: true)).motion
+        let opening = IslandTransition(from: .hidden, to: .expanded(.hover))
+
+        #expect(standard.motion(for: opening).contentEntrance == ContentEntrance(scale: 0.5, blur: 4))
+        #expect(reduced.motion(for: opening).contentEntrance == ContentEntrance(scale: 1, blur: 0))
+    }
+
     @Test("Without Reduce Motion the pointer gets a short springy lift")
     func hoverLiftWithoutReduceMotion() {
         let motion = IslandStyle.resolve(for: .standard).motion
