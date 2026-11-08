@@ -72,8 +72,8 @@ setup is asserted in tests without a window. `IslandWindowing` decides from
 ## Why the pure core
 
 `NotchGeometry`, `IslandStyle`, `AnnouncementCoalescer`, `DismissPolicy`,
-`IslandWindowing` and `HoverRegion` are value types with no framework
-dependencies. That is not purity for its own
+`IslandWindowing`, `HoverRegion` and `LowBatteryWarning` are value types with
+no framework dependencies. That is not purity for its own
 sake — it is what lets the suite cover the cases that are painful to reproduce
 by hand: an external display with no camera housing, content larger than the
 screen, a screen reader switched on halfway through a presentation, and all
