@@ -90,6 +90,7 @@ struct IslandControllerTests {
     func pressHoldsOffHoverIntent() async throws {
         let controller = IslandController(sink: RecordingSink())
         controller.hasRestingTarget = true
+        controller.expandsOnHover = true
         controller.hoverIntentDelay = 0.05
 
         controller.setPointerInside(true)
@@ -140,9 +141,27 @@ struct IslandControllerTests {
         #expect(!controller.style.motion.allowsGeometryMorph)
     }
 
-    @Test("Resting the pointer on the island expands it after the intent delay")
+    @Test("By default resting the pointer only lifts the island; a click opens it")
+    func hoverDoesNotOpenByDefault() async throws {
+        let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.hoverIntentDelay = 0.05
+        #expect(!controller.expandsOnHover)
+
+        controller.present(.collapsed(.event(.mediaChanged)))
+        controller.setPointerInside(true)
+
+        try await Task.sleep(for: .milliseconds(250))
+        #expect(controller.state == .collapsed(.event(.mediaChanged)))
+        #expect(controller.hasPointerInside)
+
+        controller.expandFromClick()
+        #expect(controller.state.isExpanded)
+    }
+
+    @Test("With hover-to-open on, resting the pointer expands it after the intent delay")
     func hoverExpandsAfterIntent() async throws {
         let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.expandsOnHover = true
         controller.hoverIntentDelay = 0.05
 
         controller.present(.collapsed(.event(.mediaChanged)))
@@ -157,6 +176,7 @@ struct IslandControllerTests {
     @Test("Passing over the island does not expand it")
     func passingOverDoesNotExpand() async throws {
         let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.expandsOnHover = true
         controller.hoverIntentDelay = 0.05
 
         controller.present(.collapsed(.event(.mediaChanged)))
@@ -207,6 +227,7 @@ struct IslandControllerTests {
     @Test("An explicit dismiss outranks a hover that was about to expand")
     func dismissCancelsHoverIntent() async throws {
         let controller = IslandController(policy: DismissPolicy(userPreference: .never), sink: RecordingSink())
+        controller.expandsOnHover = true
         controller.hoverIntentDelay = 0.05
 
         controller.present(.collapsed(.event(.mediaChanged)))

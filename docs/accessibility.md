@@ -158,8 +158,11 @@ clear on a display without a housing".*
 
 ## 11. The pointer is the extra, and it follows the hover rules
 
-Clicking the island, or resting the pointer on it, expands it. Content that
-appears that way has to meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
+Clicking the island expands it. Resting the pointer on it only lifts it a few
+points, to show the pointer has been noticed — nothing opens under a pointer
+parked at the top of the screen. Opening on hover is a switch,
+`ExpandIslandOnHover`, off by default. Whatever the pointer brings up has to
+meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
 
 - **Hoverable and persistent.** While the pointer is over the island it is never
   dismissed on a timer — the rule keyboard focus already had, user preference
@@ -169,13 +172,15 @@ appears that way has to meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
   its timeout", "Leaving the island restarts its timeout".*
 - **Dismissible.** Control-Option-Space closes it without moving the pointer,
   and so does Escape once the panel has focus.
-- **Not by accident.** Hover expands only after the pointer has rested for
-  0.25s, so crossing the notch on the way to the menu bar does not open it. A
-  click expands at once and is announced, like the hotkey.
-  *Tests: "Resting the pointer on the island expands it after the intent delay",
-  "Passing over the island does not expand it", "A click expands at once, from
-  hidden, and says so", "An explicit dismiss outranks a hover that was about to
-  expand".*
+- **Not by accident.** By default the pointer never opens the island; a click
+  does, at once, and is announced like the hotkey. With `ExpandIslandOnHover`
+  on, hover opens it only after the pointer has rested for 0.25s, so crossing
+  the notch on the way to the menu bar still does not.
+  *Tests: "By default resting the pointer only lifts the island; a click opens
+  it", "With hover-to-open on, resting the pointer expands it after the intent
+  delay", "Passing over the island does not expand it", "A click expands at
+  once, from hidden, and says so", "An explicit dismiss outranks a hover that
+  was about to expand".*
 - **Never takes the keyboard.** Hovering does not make the panel key, so typing
   elsewhere keeps working. Only a click or the hotkey hands the panel focus, and
   before the island goes back to rest the panel gives the keyboard back.
@@ -196,9 +201,9 @@ appears that way has to meet WCAG 2.2's 1.4.13, *Content on Hover or Focus*:
   backdrop never does", "The pointer enters only over the island itself",
   "Once in, the pointer may drift a little before it counts as gone".*
 - **Acknowledged, then opened.** While the pointer rests on the island it grows
-  a few points before it opens, so the pointer is seen to have been noticed; a
-  held click dips it back a little, and the release opens it — except under
-  Reduce Motion, where the opening is the acknowledgement.
+  a few points, so the pointer is seen to have been noticed; a held click dips
+  it back a little, and the release opens it — except under Reduce Motion,
+  where the island does not move until it opens.
   *Tests: "A held click dips the lifted island 8 by 5 points, on a spring that
   does not bounce", "Pressing the island only records the press; the release
   is what opens it", "A held click holds off the hover that was about to open
@@ -229,12 +234,13 @@ any release:
 6. **Accessibility Inspector.** Point it at the panel and confirm the element
    tree matches section 2 — one element collapsed, a container with three
    labelled buttons expanded.
-7. **Pointer.** Rest the pointer on the notch: the island lifts, then expands
-   after a beat and stays for as long as the pointer is on it. Sweep across the
-   notch quickly: nothing opens. Click it: it expands at once. Hover while
-   typing in another app: the typing still lands there, not in Pod. Click a
-   window just below the open island: the click reaches that window, and the
-   island closes.
+7. **Pointer.** Rest the pointer on the notch: the island lifts and stays
+   lifted, but does not open. Press and hold: it dips. Release: it opens at
+   once, and stays for as long as the pointer is on it. Hover while typing in
+   another app: the typing still lands there, not in Pod. Click a window just
+   below the open island: the click reaches that window, and the island
+   closes. With `ExpandIslandOnHover` set, resting opens it after a beat, and
+   sweeping across quickly does not.
 8. **Full screen and the lock screen.** Put an app in full screen: the island is
    still at the notch. Lock the screen: the island is gone, unless
    `ShowIslandOnLockScreen` is set, in which case it is there and typing still
@@ -253,6 +259,5 @@ any release:
 - There is no settings UI yet. `DismissPolicy.UserPreference` is honoured by
   the controller but nothing writes it.
 - The hotkey is fixed at Control-Option-Space and cannot be rebound.
-- Hover expansion cannot be turned off. Someone who triggers it by accident —
-  a tremor, a habit of parking the pointer at the top of the screen — needs
-  that switch, and it belongs with the settings UI.
+- Opening on hover is a defaults switch (`ExpandIslandOnHover`), not yet in a
+  settings UI.

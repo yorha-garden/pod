@@ -33,6 +33,7 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
     private var cancellables: Set<AnyCancellable> = []
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        controller.expandsOnHover = UserDefaults.standard.bool(forKey: IslandController.expandsOnHoverKey)
         buildPanels()
         updateRestingTarget()
         observe()
