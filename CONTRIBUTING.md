@@ -171,3 +171,77 @@ discovering that something does not build.
 
 Before you push, `./Scripts/check-conventions.sh` runs the same check as
 `Conventions` over the commits on your branch.
+
+## Pull requests
+
+### Talk first
+
+Comment on the issue before you start, and confirm the approach with a
+maintainer. That avoids duplicate work and solutions that pull against where
+Pod is going. A draft pull request is a good way to ask about a direction with
+code in hand; mark it ready for review when it is.
+
+### Keep it small
+
+One problem per pull request. Unrelated fixes and tidying, however small, go in
+a PR of their own. Aim for under about 500 changed lines: small PRs are reviewed
+sooner, roll back cleanly and carry less risk when they merge.
+
+When a change is bigger than that, split it into a stack. Each PR branches from
+the one below it and targets that branch instead of `main`:
+
+```
+main ← feature/pointer-hold ← feature/pointer-expand ← feature/pointer-docs
+```
+
+Both workflows run on stacked PRs, since neither filters on the base branch.
+Merge from the bottom up. Once the lowest PR merges, the next one is retargeted
+at `main`; GitHub does that for you when the merged branch is deleted. More on
+the technique: [stacked PRs](https://graphite.com/blog/stacked-prs),
+[daisy-chaining pull requests](https://tinyideasxyz.medium.com/daisy-chaining-pull-requests-0d5a41a87b23),
+and [a worked example](https://medium.com/inside-bukalapak/smaller-faster-code-review-with-stacked-merge-request-1dc130705bc1).
+
+### What a pull request needs
+
+Required:
+
+- **The issue id in the title**, after a Conventional Commit subject:
+  `feat(ui): open the island with the pointer [#13]`. The title becomes the
+  merge commit's subject, so it follows the same rules as a commit, and
+  `Conventions` checks it.
+- **A description.** The [template](.github/pull_request_template.md) fills in
+  when you open the PR.
+- **The linked issue**, as `Closes #13` in the description, so the merge closes
+  it.
+- **Tests and documentation** for what changed. See
+  [Documentation](#documentation).
+- **Deployment prerequisites.** Pod reads no environment variables, so here
+  this means anything that has to be true before a build ships: a new
+  `Info.plist` entry, a new system permission or entitlement, a higher minimum
+  macOS, a `UserDefaults` migration, a change to signing or to
+  `Scripts/build-app.sh`. Write "None" when there are none.
+- **Green CI**: both *CI / Build and test* and *Conventions / Commits, branch
+  and title*.
+
+Recommended:
+
+- **Screenshots or a screen recording** of anything visible. Pod is almost all
+  interface, so that is most PRs. Show the normal path and a few edge cases:
+  the keyboard path, what VoiceOver reads, Reduce Motion, a Mac without a
+  notch, a second display.
+- **Before and after numbers** when performance is the point of the change.
+- **Migration steps** for a breaking change.
+
+### The description
+
+The template asks for:
+
+- **Summary**: the change in a sentence or two.
+- **Problem**: what it fixes or makes possible.
+- **Solution**: how, and where a reviewer should look first.
+- **Test Evidence**: how it was tested, with screenshots or a recording.
+- **Deployment Prerequisite / Breaking Changes**: as above.
+- **Notes**: anything else a reviewer should know.
+
+Write it for someone who has not read the code you just wrote. A reviewer should
+understand the change from the description without tracing the codebase.
