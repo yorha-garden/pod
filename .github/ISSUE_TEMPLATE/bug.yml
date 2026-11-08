@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in Pod does not work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One bug per issue. If it is about reaching or reading the island, say
+        which settings and input you were using: those bugs are the ones Pod
+        exists to fix.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Press Control-Option-Space
+        2. Press Tab twice
+        3. …
+    validations:
+      required: true
+  - type: dropdown
+    id: input
+    attributes:
+      label: How you were driving Pod
+      multiple: true
+      options:
+        - Keyboard
+        - Pointer
+        - VoiceOver
+        - Voice Control or Switch Control
+  - type: checkboxes
+    id: settings
+    attributes:
+      label: Accessibility settings that were on
+      options:
+        - label: Reduce Motion
+        - label: Reduce Transparency
+        - label: Increase Contrast
+        - label: Differentiate Without Colour
+        - label: Full Keyboard Access
+        - label: A larger text size
+  - type: input
+    id: mac
+    attributes:
+      label: Mac, display and macOS version
+      placeholder: MacBook Pro 14-inch with a notch, plus an external display; macOS 27.0
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Pod commit or version
+      placeholder: 8e73652
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, recording or logs
+      description: Drag files in. Read logs for anything private before attaching them.
