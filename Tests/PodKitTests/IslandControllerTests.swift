@@ -55,6 +55,22 @@ struct IslandControllerTests {
         #expect(controller.state.isVisible)
     }
 
+    @Test("Each step records which way the island went, for the view to move it by")
+    func transitionsAreRecorded() {
+        let controller = IslandController(sink: RecordingSink())
+
+        controller.present(.collapsed(.event(.mediaChanged)))
+        #expect(controller.transition == IslandTransition(from: .hidden, to: .collapsed(.event(.mediaChanged))))
+        #expect(controller.transition.direction == .growing)
+
+        controller.expandFromClick()
+        #expect(controller.transition.direction == .growing)
+
+        controller.dismiss()
+        #expect(controller.transition == IslandTransition(from: .expanded(.hover), to: .hidden))
+        #expect(controller.transition.direction == .shrinking)
+    }
+
     @Test("A repeated announcement is not spoken twice while the island stays up")
     func repeatedAnnouncementIsCoalesced() {
         let sink = RecordingSink()

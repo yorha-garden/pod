@@ -164,7 +164,7 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
         panel.setFrame(
             frame,
             display: true,
-            animate: controller.style.motion.animatesFrameChange(panelWasOnScreen: wasOnScreen)
+            animate: wasOnScreen && controller.style.motion.allowsGeometryMorph
         )
 
         if !wasOnScreen {

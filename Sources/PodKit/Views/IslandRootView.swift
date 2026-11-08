@@ -28,7 +28,7 @@ public struct IslandRootView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .animation(controller.style.motion.animation, value: controller.state)
+            .animation(motion.shapeAnimation, value: controller.state)
             // A container with a name and a state, so VoiceOver announces
             // "Pod, expanded" rather than an anonymous group.
             .accessibilityElement(children: .contain)
@@ -55,7 +55,7 @@ public struct IslandRootView: View {
                 style: controller.style,
                 onExpand: { controller.expandFromClick() }
             )
-            .transition(controller.style.motion.transition)
+            .transition(motion.transition)
 
         case .expanded:
             ExpandedContentView(
@@ -65,8 +65,12 @@ public struct IslandRootView: View {
                 focus: $focus,
                 onCommand: { media.send($0) }
             )
-            .transition(controller.style.motion.transition)
+            .transition(motion.transition)
         }
+    }
+
+    private var motion: IslandMotion {
+        controller.style.motion.motion(for: controller.transition)
     }
 
     private var stateDescription: String {

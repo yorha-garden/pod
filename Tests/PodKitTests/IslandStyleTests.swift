@@ -37,23 +37,62 @@ struct IslandStyleTests {
         #expect(style.borderWidth == 2)
     }
 
-    @Test("Appearing from hidden never animates the frame, whatever the motion setting",
-          arguments: [AccessibilityPreferences.standard, AccessibilityPreferences(reduceMotion: true)])
-    func appearingIsPlacedNotAnimated(preferences: AccessibilityPreferences) {
-        let motion = IslandStyle.resolve(for: preferences).motion
+    @Test("Opening springs out with a bounce, closing settles without one")
+    func openingAndClosingSprings() {
+        let motion = IslandStyle.resolve(for: .standard).motion
 
-        // There is no previous frame worth animating from: on the first
-        // presentation it is wherever the panel was constructed.
-        #expect(!motion.animatesFrameChange(panelWasOnScreen: false))
+        let opening = motion.motion(for: IslandTransition(from: .collapsed(.hover), to: .expanded(.hover)))
+        let closing = motion.motion(for: IslandTransition(from: .expanded(.hover), to: .hidden))
+
+        #expect(opening == .spring(.bounce(duration: 0.44, bounce: 0.375)))
+        #expect(closing == .spring(.response(0.4, dampingFraction: 1)))
+        guard case let .spring(open) = opening, case let .spring(close) = closing else {
+            Issue.record("expected springs")
+            return
+        }
+        #expect(open.overshoots)
+        // The island must never bounce past the housing it returns into.
+        #expect(!close.overshoots)
     }
 
-    @Test("Between on-screen states the frame animates only when the morph is allowed")
-    func onScreenChangesFollowReduceMotion() {
-        let standard = IslandStyle.resolve(for: .standard).motion
-        let reduced = IslandStyle.resolve(for: AccessibilityPreferences(reduceMotion: true)).motion
+    @Test("Growing out of the housing uses the opening spring")
+    func appearingGrowsOutOfTheHousing() {
+        let motion = IslandStyle.resolve(for: .standard).motion
 
-        #expect(standard.animatesFrameChange(panelWasOnScreen: true))
-        #expect(!reduced.animatesFrameChange(panelWasOnScreen: true))
+        #expect(motion.motion(for: IslandTransition(from: .hidden, to: .collapsed(.event(.mediaChanged))))
+            == .spring(MorphTiming.standard.open))
+    }
+
+    @Test("Changing content without changing size settles without overshoot")
+    func holdingStepsSettle() {
+        let motion = IslandStyle.resolve(for: .standard).motion
+        let step = IslandTransition(from: .collapsed(.event(.mediaChanged)), to: .collapsed(.event(.batteryLow)))
+
+        #expect(step.direction == .holding)
+        #expect(motion.motion(for: step) == .spring(MorphTiming.standard.settle))
+        #expect(!MorphTiming.standard.settle.overshoots)
+    }
+
+    @Test("Reduce Motion fades every transition in place and drops the hover lift",
+          arguments: [
+              IslandTransition(from: .hidden, to: .collapsed(.hover)),
+              IslandTransition(from: .collapsed(.hover), to: .expanded(.hover)),
+              IslandTransition(from: .expanded(.keyboard), to: .hidden),
+              IslandTransition(from: .collapsed(.hover), to: .collapsed(.keyboard)),
+          ])
+    func reduceMotionFadesEverything(transition: IslandTransition) {
+        let motion = IslandStyle.resolve(for: AccessibilityPreferences(reduceMotion: true)).motion
+
+        #expect(motion.motion(for: transition) == .fade(duration: 0.12))
+        #expect(motion.hoverLift == nil)
+    }
+
+    @Test("Without Reduce Motion the pointer gets a short springy lift")
+    func hoverLiftWithoutReduceMotion() {
+        let motion = IslandStyle.resolve(for: .standard).motion
+
+        #expect(motion.hoverLift == .bounce(duration: 0.35, bounce: 0.3))
+        #expect(HoverLift.standard.width > 0 && HoverLift.standard.height > 0)
     }
 
     @Test("Colour is never the only state cue, and the hit floor always holds",
