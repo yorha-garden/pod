@@ -61,8 +61,8 @@ struct ExpandedContentView: View {
             BatteryBadgeView(status: battery, style: style)
         }
         .padding(.horizontal, 22)
-        .padding(.top, 10)
-        .padding(.bottom, 18)
+        .padding(.top, 6)
+        .padding(.bottom, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
     }
