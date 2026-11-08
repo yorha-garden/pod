@@ -245,3 +245,77 @@ The template asks for:
 
 Write it for someone who has not read the code you just wrote. A reviewer should
 understand the change from the description without tracing the codebase.
+
+## Review
+
+### The cycle
+
+A reviewer is assigned and leaves feedback. Author and reviewer discuss it, the
+author revises, and the cycle repeats until the reviewer approves. Then the PR
+merges.
+
+### What reviewers look for
+
+The aim is a better change, not a verdict on its author. Read for:
+
+- **Correctness.** Does it solve the problem in the issue? Are the edge cases
+  handled: no notch, a second display, VoiceOver running, Reduce Motion on?
+- **Readability.** Can you follow it? Is any function too large or doing too
+  much?
+- **Architecture.** Does it fit [`docs/architecture.md`](docs/architecture.md)?
+  Decisions belong in `PodKit` as pure values, not in views or the coordinator,
+  and the controller observes nothing. Does it add coupling it does not need?
+- **Testing.** Are there tests, and would they fail if the change were wrong?
+- **Documentation.** If behaviour changed, did
+  [`docs/accessibility.md`](docs/accessibility.md) change with it, naming the
+  tests that enforce each new line?
+- **Performance and security.** Does it do work on every frame or pointer move
+  that it could skip? Does it ask for a permission, read something private, or
+  add a dependency?
+
+### Writing feedback
+
+- Be respectful, and give the reasoning behind each comment.
+- Say which comments are required and which are optional. Prefix optional ones
+  with `nit:`. Anything without it is a change you need before you approve.
+- Ask when something is unclear, rather than assuming.
+- Do not block on trivia. If only nits are left, approve and leave them to the
+  author.
+
+Use GitHub's review states to match: *Request changes* when something is
+required, *Comment* for questions and nits, *Approve* when it is ready.
+
+### Responding to feedback
+
+- Answer every comment: fix it, or reply saying why not.
+- Ask when a comment is unclear, and give your reasoning when you disagree.
+  Review is a discussion.
+- Do not apply a suggestion you do not understand.
+- Push fixes as new commits with real subjects, such as
+  `fix(island): cancel the dismiss timer on focus` rather than
+  `address review`, so the reviewer can see what changed. Prefer that to
+  rewriting the branch while it is under review.
+- Then re-request review, and say in a comment which changes matter most.
+
+## Merging
+
+A pull request merges when:
+
+- every CI check passes. If one fails, the PR is updated until it does not;
+- every review thread is resolved;
+- the required reviewers have approved: at least one maintainer other than the
+  author;
+- the commit subjects and the title follow this guide, which `Conventions`
+  checks.
+
+Merge with a merge commit, not a squash or a rebase. The small commits are the
+history worth keeping, and each one stays revertable on its own. The merge
+commit's subject is the PR title followed by its number, as on every merge so
+far:
+
+```bash
+gh pr merge 14 --merge --subject "feat(ui): open the island with the pointer [#13] (#14)"
+```
+
+The merge button works too, if you edit its subject to match. Delete the branch
+once it has merged.
