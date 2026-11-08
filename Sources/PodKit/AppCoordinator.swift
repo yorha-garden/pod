@@ -31,6 +31,7 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
     private var hotKey: GlobalHotKey?
     private var pointerTracker: PointerTracker?
     private var cancellables: Set<AnyCancellable> = []
+    private var lowBatteryWarning = LowBatteryWarning()
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         controller.expandsOnHover = UserDefaults.standard.bool(forKey: IslandController.expandsOnHoverKey)
@@ -130,8 +131,9 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         battery.$status
+            .removeDuplicates()
             .sink { [weak self] status in
-                self?.announceIfLow(status)
+                self?.warnIfNewlyLow(status)
             }
             .store(in: &cancellables)
 
@@ -262,8 +264,11 @@ public final class AppCoordinator: NSObject, NSApplicationDelegate {
         controller.dismiss()
     }
 
-    private func announceIfLow(_ status: BatteryStatus) {
-        guard status.isLow else { return }
+    /// Brings the island out, and says so, only for the reading that makes
+    /// the battery low or takes it a step lower — not for every percent it
+    /// loses while low.
+    private func warnIfNewlyLow(_ status: BatteryStatus) {
+        guard lowBatteryWarning.shouldWarn(for: status) else { return }
 
         controller.present(
             .collapsed(.event(.batteryLow)),

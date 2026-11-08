@@ -60,6 +60,15 @@ user is actually doing.
 - High priority is never withheld, repeat or not.
 - Reopening the island resets the history, because the user has moved on.
   *Tests: "Screen reader announcement coalescing".*
+- A low battery is an event when it happens, not with every reading after.
+  The island comes out, with a high-priority announcement, when the battery
+  becomes low (20 percent) and once more at 10 and at 5 percent — not for
+  every percent it loses. Connecting the charger, or the level climbing back
+  past 23 percent, re-arms it for the next discharge.
+  *Tests: "Successive low readings warn once, not on every percent lost",
+  "Each deeper step warns once", "Charging re-arms it, so a later discharge
+  warns again", "A reading wavering just above the threshold does not warn
+  again".*
 
 ## 4. The island is never taken away on a timer the user is losing
 
