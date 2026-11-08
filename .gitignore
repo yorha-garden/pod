@@ -16,6 +16,11 @@ dist/
 .env
 .env.*
 !.env.example
+# Signing identities and API keys (Developer ID exports, notarytool keys)
+*.p12
+*.p8
+*.pem
+*.key
 
 # Noise
 .DS_Store
