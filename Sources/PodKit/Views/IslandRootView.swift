@@ -53,6 +53,8 @@ public struct IslandRootView: View {
                 media: media.snapshot,
                 battery: battery.status,
                 style: controller.style,
+                housingWidth: 0,
+                minimumHeight: controller.style.minimumHitTarget,
                 onExpand: { controller.expandFromClick() }
             )
             .transition(motion.transition)
@@ -62,6 +64,7 @@ public struct IslandRootView: View {
                 media: media.snapshot,
                 battery: battery.status,
                 style: controller.style,
+                housingHeight: 0,
                 focus: $focus,
                 onCommand: { media.send($0) }
             )
