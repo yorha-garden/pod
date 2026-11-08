@@ -1,30 +1,27 @@
 import SwiftUI
 
-/// The island's surface, resolved from the accessibility style.
+/// The island's surface: flat black, the housing's own colour.
+///
+/// Anything lighter or translucent would show a seam where the island meets
+/// the housing, and black under light text also means the text's contrast
+/// never depends on the wallpaper behind it. Increase Contrast adds a border,
+/// so the island's edge is unmistakable against a dark desktop.
 struct IslandBackground: View {
     let style: IslandStyle
-    let cornerRadius: CGFloat
+    let shape: NotchShape
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-
         shape
-            .fill(fill)
+            .fill(Color.black)
             .overlay {
                 if style.borderWidth > 0 {
-                    shape.strokeBorder(.primary, lineWidth: style.borderWidth)
+                    shape.stroke(Color.white, lineWidth: style.borderWidth * 2)
+                        // Stroked at twice the width and clipped back to the
+                        // shape: an inside border, so the island's footprint
+                        // — and the pointer region tracked from it — does not
+                        // change when the setting does.
+                        .clipShape(shape)
                 }
             }
-    }
-
-    private var fill: AnyShapeStyle {
-        switch style.background {
-        case .material:
-            return AnyShapeStyle(.regularMaterial)
-        case .opaque:
-            // Flat, so the text's contrast never depends on the wallpaper
-            // that happens to be behind the island.
-            return AnyShapeStyle(Color(nsColor: .controlBackgroundColor))
-        }
     }
 }

@@ -2,9 +2,11 @@ import SwiftUI
 
 /// What the island leaves at the notch while it is hidden.
 ///
-/// It sits over the camera housing and draws nothing, so nobody sees it — but
-/// the pointer can rest on it, a click lands, and VoiceOver finds a labelled
-/// button instead of nothing at all.
+/// It is the camera housing exactly, filled black where the display has no
+/// pixels, so nobody sees it — but the pointer can rest on it, a click lands,
+/// and VoiceOver finds a labelled button instead of nothing at all. The black
+/// fill is also what makes it hittable: the panel only takes the pointer where
+/// something is drawn.
 struct RestingTargetView: View {
     let onExpand: () -> Void
 
